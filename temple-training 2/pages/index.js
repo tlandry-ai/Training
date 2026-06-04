@@ -234,7 +234,7 @@ export default function Home() {
   const cancelBtnStyle = { background:'transparent', border:`1px solid ${C.border}`, borderRadius:6, padding:'10px 20px', color:C.muted, fontFamily:"'DM Mono', monospace", fontSize:'0.65rem', letterSpacing:'0.06em', textTransform:'uppercase', cursor:'pointer' }
 
   return (
-    <div style={{ background:C.bg, minHeight:'100vh', color:C.text, fontFamily:"'DM Sans', sans-serif" }}>
+    <div style={{ background:C.bg, minHeight:'100vh', color:C.text, fontFamily:"'DM Sans', sans-serif", overflowY:'auto' }}>
       <style>{css}</style>
 
       {/* HEADER */}
