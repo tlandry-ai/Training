@@ -93,7 +93,7 @@ export default function Login() {
           color:'#d97706', lineHeight:1.15, marginBottom:6,
           textShadow:'2px 2px 0px #f9a8d4, 4px 4px 0px #fde68a',
         }}>
-          Temple&apos;s<br/>Summer Plan
+          Temple's<br/>Summer Plan
         </h1>
 
         <div style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.65rem', color:'#c4a882', letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:32 }}>

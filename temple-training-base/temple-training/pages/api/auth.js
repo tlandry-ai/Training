@@ -1,14 +1,12 @@
 import { setCookie } from 'cookies-next'
 
-const APP_PASSWORD = 'Like@Tiger2026!'
-
 export default function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
   const { password } = req.body
 
-  if (password === APP_PASSWORD) {
-    setCookie('auth', APP_PASSWORD, {
+  if (password === process.env.APP_PASSWORD) {
+    setCookie('auth', process.env.APP_PASSWORD, {
       req, res,
       maxAge: 60 * 60 * 24 * 30, // 30 days
       httpOnly: true,

@@ -1,2 +1,3 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { background: #0d0d0d; }
+html, body { background: #F5F0E8; min-height: 100%; overflow-x: hidden; }
+body { overflow-y: auto; }
