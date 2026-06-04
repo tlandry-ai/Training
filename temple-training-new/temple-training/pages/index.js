@@ -244,7 +244,7 @@ export default function Home() {
             <>
               <div style={{ marginBottom:28 }}>
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline', marginBottom:8 }}>
-                  <div style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.63rem', color:C.muted, letterSpacing:'0.06em', textTransform:'uppercase' }}>Today&apos;s Plan</div>
+                  <div style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.63rem', color:C.muted, letterSpacing:'0.06em', textTransform:'uppercase' }}>Today's Plan</div>
                   <div style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.68rem', color:pct===100 ? '#2d5a28' : C.muted }}>
                     {done}/{total}{pct===100 ? ' · Done ✓' : `  ·  ${pct}%`}
                   </div>
