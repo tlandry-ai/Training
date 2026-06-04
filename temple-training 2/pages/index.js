@@ -1,58 +1,47 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 
-const C = {
-  bg:'#F5F0E8', surface:'#ffffff', border:'#e8e3da', borderLight:'#f0ece3',
-  text:'#1a1a1a', muted:'#aaa', mutedDark:'#555',
-  solid:{ bg:'#D6E8D4', text:'#2d5a28', border:'#b8d4b5' },
-  cp:   { bg:'#D4E4F5', text:'#1a4a7a', border:'#b5cce8' },
-  lift: { bg:'#F5E6D4', text:'#7a3d1a', border:'#e8cdb5' },
-  gym:  { bg:'#EBD4F5', text:'#4a1a7a', border:'#d4b5e8' },
-  run:  { bg:'#F5D4D4', text:'#7a1a1a', border:'#e8b5b5' },
-  pt:   { bg:'#D4F5F0', text:'#1a6a5a', border:'#b5e8e0' },
-  work: { bg:'#F5F0D4', text:'#7a6a1a', border:'#e8ddb5' },
+const COLORS = {
+  bg: '#0d0d0d', surface: '#161616', border: '#222',
+  red: '#E8322A', redDim: '#7a1a15', white: '#F5F0E8',
+  muted: '#555', mutedLight: '#888',
+  solid: { bg: '#1a3318', text: '#6fcf6a', border: '#2d5a28' },
+  cp:    { bg: '#131e2e', text: '#6aaef5', border: '#1a4a7a' },
+  lift:  { bg: '#2e1a0d', text: '#f5a96a', border: '#7a3d1a' },
+  gym:   { bg: '#1e0d2e', text: '#c46af5', border: '#4a1a7a' },
+  run:   { bg: '#2e0d0d', text: '#f56a6a', border: '#7a1a1a' },
+  pt:    { bg: '#0d2e28', text: '#6af5e0', border: '#1a6a5a' },
+  work:  { bg: '#1e1c0d', text: '#d4c96a', border: '#5a4a1a' },
 }
 
-const MEAL_TYPES = [
-  { id:'breakfast', label:'Breakfast', icon:'🌅' },
-  { id:'lunch',     label:'Lunch',     icon:'☀️' },
-  { id:'dinner',    label:'Dinner',    icon:'🌙' },
-  { id:'snack',     label:'Snack',     icon:'🍎' },
-]
+const WORK_START = new Date(2026, 5, 22)
+const WORK_END   = new Date(2026, 7, 1)
 
-const WORKOUT_TYPES = ['Gymnastics','Lift','Pilates','Run','CorePower','Solid Core','PT','Walk','Swim','Other']
-
-const CATS = [
-  { id:'gym',     label:'Gymnastics', color:'#4a1a7a' },
-  { id:'fitness', label:'Fitness',    color:'#7a3d1a' },
-  { id:'skills',  label:'Skills',     color:'#1a4a7a' },
-  { id:'life',    label:'Life',       color:'#2d5a28' },
-]
-
-const WORK_START  = new Date(2026, 5, 22)
-const WORK_END    = new Date(2026, 7, 1)
 const DAY_NAMES   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December']
 
 function getDayPlan(date) {
   const d = new Date(date); d.setHours(0,0,0,0)
   const dow = d.getDay()
-  if (dow === 0 || dow === 6) return { isActive:false, isWeekend:true,  blocks:[] }
-  if (d < WORK_START || d >= WORK_END) return { isActive:false, isWeekend:false, blocks:[] }
+  if (dow === 0 || dow === 6) return { isActive: false, blocks: [] }
+  const inRange = d >= WORK_START && d < WORK_END
+  if (!inRange) return { isActive: false, blocks: [] }
+  const mwf = dow === 1 || dow === 3 || dow === 5
   const blocks = []
-  if (dow === 1 || dow === 3 || dow === 5) {
-    blocks.push({ id:'cp',   label:'5:30 CorePower', color:C.cp   })
-    blocks.push({ id:'lift', label:'7–8 Lift',        color:C.lift })
-    blocks.push({ id:'gym',  label:'8–10 Practice',   color:C.gym  })
-    blocks.push({ id:'work', label:'9–6 Work',        color:C.work })
-    if (dow === 3 || dow === 5) blocks.push({ id:'run', label:'6:30p Run', color:C.run })
+  if (mwf) {
+    blocks.push({ id: 'cp',   label: 'CorePower',   time: '5:30 AM',         color: COLORS.cp   })
+    blocks.push({ id: 'lift', label: 'Lift',         time: '7:00–8:00 AM',    color: COLORS.lift })
+    blocks.push({ id: 'gym',  label: 'Gym Practice', time: '8:00–10:00 AM',   color: COLORS.gym  })
+    blocks.push({ id: 'work', label: 'Work',         time: '9:00 AM–6:00 PM', color: COLORS.work })
+    if (dow === 3 || dow === 5)
+      blocks.push({ id: 'run', label: 'Run',         time: '6:30 PM',         color: COLORS.run  })
   } else {
-    blocks.push({ id:'solid', label:'5:30 Solid Core', color:C.solid })
-    blocks.push({ id:'pt',   label:'6:30 PT',          color:C.pt   })
-    blocks.push({ id:'gym',  label:'7–9 Practice',     color:C.gym  })
-    blocks.push({ id:'work', label:'9–6 Work',         color:C.work })
+    blocks.push({ id: 'solid', label: 'Solid Core',  time: '5:30 AM',         color: COLORS.solid })
+    blocks.push({ id: 'pt',   label: 'PT',           time: '6:30–7:00 AM',    color: COLORS.pt   })
+    blocks.push({ id: 'gym',  label: 'Gym Practice', time: '7:00–9:00 AM',    color: COLORS.gym  })
+    blocks.push({ id: 'work', label: 'Work',         time: '9:00 AM–6:00 PM', color: COLORS.work })
   }
-  return { isActive:true, isWeekend:false, blocks }
+  return { isActive: true, blocks }
 }
 
 function dateKey(date) {
@@ -62,262 +51,243 @@ function dateKey(date) {
 
 function buildMonthCells(year, month) {
   const cells = []
-  const first = new Date(year, month, 1).getDay()
-  const days  = new Date(year, month+1, 0).getDate()
-  for (let i=0; i<first; i++) cells.push(null)
-  for (let d=1; d<=days; d++) cells.push(new Date(year, month, d))
+  const firstDay = new Date(year, month, 1).getDay()
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  for (let i = 0; i < firstDay; i++) cells.push(null)
+  for (let d = 1; d <= daysInMonth; d++) cells.push(new Date(year, month, d))
   return cells
 }
 
 export default function Home() {
-  const [tab, setTab]               = useState('today')
-  const [today]                     = useState(new Date())
-  const [checkins, setCheckins]     = useState({})
-  const [notes, setNotes]           = useState({})
-  const [goals, setGoals]           = useState([])
-  const [foodLog, setFoodLog]       = useState({})
-  const [workoutLog, setWorkoutLog] = useState({})
-  const [noteInput, setNoteInput]   = useState('')
-  const [newGoal, setNewGoal]       = useState({ title:'', cat:'gym', deadline:'', note:'' })
-  const [addingGoal, setAddingGoal] = useState(false)
-  const [filterCat, setFilterCat]   = useState('all')
-  const [loading, setLoading]       = useState(true)
-  const [saving, setSaving]         = useState(false)
-
-  // Food log form
-  const [newFood, setNewFood]       = useState({ meal_type:'breakfast', description:'' })
-  const [addingFood, setAddingFood] = useState(false)
-
-  // Workout log form
-  const [newWorkout, setNewWorkout] = useState({ type:'Gymnastics', duration:'', notes:'' })
-  const [addingWorkout, setAddingWorkout] = useState(false)
+  const [tab, setTab] = useState('today')
+  const [today] = useState(new Date())
+  const [checkins, setCheckins] = useState({})
+  const [notes, setNotes] = useState({})
+  const [noteInput, setNoteInput] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => { loadData() }, [])
 
   async function loadData() {
     setLoading(true)
-    const [{ data:ci }, { data:no }, { data:go }, { data:fl }, { data:wl }] = await Promise.all([
+    const [{ data: ci }, { data: no }] = await Promise.all([
       supabase.from('checkins').select('*'),
-      supabase.from('notes').select('*').order('created_at', { ascending:true }),
-      supabase.from('goals').select('*').order('created_at', { ascending:true }),
-      supabase.from('food_log').select('*').order('created_at', { ascending:true }),
-      supabase.from('workout_log').select('*').order('created_at', { ascending:true }),
+      supabase.from('notes').select('*').order('created_at', { ascending: true }),
     ])
     const ciMap = {}
-    ;(ci||[]).forEach(r => { if (!ciMap[r.date_key]) ciMap[r.date_key]={}; ciMap[r.date_key][r.block_id]=r.done })
+    ;(ci || []).forEach(row => {
+      if (!ciMap[row.date_key]) ciMap[row.date_key] = {}
+      ciMap[row.date_key][row.block_id] = row.done
+    })
     const noMap = {}
-    ;(no||[]).forEach(r => { if (!noMap[r.date_key]) noMap[r.date_key]=[]; noMap[r.date_key].push({ text:r.text, ts:new Date(r.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) }) })
-    const flMap = {}
-    ;(fl||[]).forEach(r => { if (!flMap[r.date_key]) flMap[r.date_key]=[]; flMap[r.date_key].push(r) })
-    const wlMap = {}
-    ;(wl||[]).forEach(r => { if (!wlMap[r.date_key]) wlMap[r.date_key]=[]; wlMap[r.date_key].push(r) })
-    setCheckins(ciMap); setNotes(noMap); setGoals(go||[]); setFoodLog(flMap); setWorkoutLog(wlMap)
+    ;(no || []).forEach(row => {
+      if (!noMap[row.date_key]) noMap[row.date_key] = []
+      noMap[row.date_key].push({ text: row.text, ts: new Date(row.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) })
+    })
+    setCheckins(ciMap)
+    setNotes(noMap)
     setLoading(false)
   }
 
   async function toggleCheckin(date, blockId) {
     const key = dateKey(date)
-    const cur = checkins[key]?.[blockId] || false
-    setCheckins(prev => ({ ...prev, [key]:{ ...(prev[key]||{}), [blockId]:!cur } }))
-    await supabase.from('checkins').upsert({ date_key:key, block_id:blockId, done:!cur }, { onConflict:'date_key,block_id' })
+    const current = checkins[key]?.[blockId] || false
+    const updated = { ...checkins, [key]: { ...(checkins[key] || {}), [blockId]: !current } }
+    setCheckins(updated)
+    await supabase.from('checkins').upsert(
+      { date_key: key, block_id: blockId, done: !current },
+      { onConflict: 'date_key,block_id' }
+    )
   }
 
   async function saveNote() {
     if (!noteInput.trim()) return
     setSaving(true)
-    const key = dateKey(today); const text = noteInput.trim()
-    const { data } = await supabase.from('notes').insert({ date_key:key, text }).select().single()
-    if (data) { const entry = { text, ts:new Date(data.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) }; setNotes(prev => ({ ...prev, [key]:[...(prev[key]||[]), entry] })) }
-    setNoteInput(''); setSaving(false)
-  }
-
-  async function toggleGoal(id) {
-    const goal = goals.find(g => g.id===id); if (!goal) return
-    setGoals(prev => prev.map(g => g.id===id ? {...g,done:!g.done} : g))
-    await supabase.from('goals').update({ done:!goal.done }).eq('id', id)
-  }
-
-  async function saveGoal() {
-    if (!newGoal.title.trim()) return
-    const { data } = await supabase.from('goals').insert({ title:newGoal.title.trim(), cat:newGoal.cat, deadline:newGoal.deadline||null, note:newGoal.note||null, done:false }).select().single()
-    if (data) setGoals(prev => [...prev, data])
-    setNewGoal({ title:'', cat:'gym', deadline:'', note:'' }); setAddingGoal(false)
-  }
-
-  async function deleteGoal(id) {
-    setGoals(prev => prev.filter(g => g.id!==id))
-    await supabase.from('goals').delete().eq('id', id)
-  }
-
-  async function saveFood() {
-    if (!newFood.description.trim()) return
     const key = dateKey(today)
-    const { data } = await supabase.from('food_log').insert({ date_key:key, meal_type:newFood.meal_type, description:newFood.description.trim() }).select().single()
-    if (data) setFoodLog(prev => ({ ...prev, [key]:[...(prev[key]||[]), data] }))
-    setNewFood({ meal_type:'breakfast', description:'' }); setAddingFood(false)
+    const text = noteInput.trim()
+    const { data } = await supabase.from('notes').insert({ date_key: key, text }).select().single()
+    if (data) {
+      const entry = { text, ts: new Date(data.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+      setNotes(prev => ({ ...prev, [key]: [...(prev[key] || []), entry] }))
+    }
+    setNoteInput('')
+    setSaving(false)
   }
 
-  async function deleteFoodEntry(id) {
-    const key = dateKey(today)
-    setFoodLog(prev => ({ ...prev, [key]:(prev[key]||[]).filter(e => e.id!==id) }))
-    await supabase.from('food_log').delete().eq('id', id)
-  }
-
-  async function saveWorkout() {
-    if (!newWorkout.type) return
-    const key = dateKey(today)
-    const { data } = await supabase.from('workout_log').insert({ date_key:key, type:newWorkout.type, duration:newWorkout.duration||null, notes:newWorkout.notes||null }).select().single()
-    if (data) setWorkoutLog(prev => ({ ...prev, [key]:[...(prev[key]||[]), data] }))
-    setNewWorkout({ type:'Gymnastics', duration:'', notes:'' }); setAddingWorkout(false)
-  }
-
-  async function deleteWorkoutEntry(id) {
-    const key = dateKey(today)
-    setWorkoutLog(prev => ({ ...prev, [key]:(prev[key]||[]).filter(e => e.id!==id) }))
-    await supabase.from('workout_log').delete().eq('id', id)
-  }
-
-  const todayKey      = dateKey(today)
-  const todayPlan     = getDayPlan(today)
-  const todayCI       = checkins[todayKey]  || {}
-  const todayNotes    = notes[todayKey]     || []
-  const todayFood     = foodLog[todayKey]   || []
-  const todayWorkouts = workoutLog[todayKey]|| []
-  const done          = todayPlan.blocks.filter(b => todayCI[b.id]).length
-  const total         = todayPlan.blocks.length
-  const pct           = total > 0 ? Math.round((done/total)*100) : 0
-  const goalsComplete = goals.filter(g => g.done).length
-  const filteredGoals = filterCat==='all' ? goals : goals.filter(g => g.cat===filterCat)
+  const todayKey = dateKey(today)
+  const todayPlan = getDayPlan(today)
+  const todayCheckins = checkins[todayKey] || {}
+  const todayNotes = notes[todayKey] || []
+  const todayDone = todayPlan.blocks.filter(b => todayCheckins[b.id]).length
+  const todayTotal = todayPlan.blocks.length
+  const pct = todayTotal > 0 ? Math.round((todayDone / todayTotal) * 100) : 0
 
   function calcStreak() {
-    let s=0; const d=new Date(today); d.setDate(d.getDate()-1)
-    for (let i=0; i<60; i++) {
-      const plan=getDayPlan(d); if (!plan.isActive) { d.setDate(d.getDate()-1); continue }
-      const dc=checkins[dateKey(d)]||{}; if (!plan.blocks.some(b=>dc[b.id])) break
-      s++; d.setDate(d.getDate()-1)
+    let streak = 0
+    const d = new Date(today); d.setDate(d.getDate() - 1)
+    for (let i = 0; i < 60; i++) {
+      const plan = getDayPlan(d)
+      if (!plan.isActive) { d.setDate(d.getDate() - 1); continue }
+      const dc = checkins[dateKey(d)] || {}
+      if (!plan.blocks.some(b => dc[b.id])) break
+      streak++
+      d.setDate(d.getDate() - 1)
     }
-    return s
+    return streak
   }
 
-  const streak        = loading ? '—' : calcStreak()
-  const totalSessions = Object.values(checkins).reduce((a,dc) => a+Object.values(dc).filter(Boolean).length, 0)
+  function getDayStatus(date) {
+    const plan = getDayPlan(date)
+    if (!plan.isActive) return 'inactive'
+    const dc = checkins[dateKey(date)] || {}
+    const done = plan.blocks.filter(b => dc[b.id]).length
+    const d = new Date(date); d.setHours(0,0,0,0)
+    const t = new Date(today); t.setHours(0,0,0,0)
+    if (d > t) return 'future'
+    if (done === 0) return 'missed'
+    if (done === plan.blocks.length) return 'complete'
+    return 'partial'
+  }
 
-  const TABS = [
-    { id:'today',    label:'TODAY'    },
-    { id:'calendar', label:'CALENDAR' },
-    { id:'log',      label:'LOG'      },
-    { id:'goals',    label:'GOALS'    },
-    { id:'skills',   label:'SKILLS ↗', locked:true },
-  ]
+  const streak = loading ? 0 : calcStreak()
+  const totalSessions = Object.values(checkins).reduce((acc, dc) => acc + Object.values(dc).filter(Boolean).length, 0)
 
-  const css = `
-    @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
-    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
-    body { background:#F5F0E8; }
-    input:focus, textarea:focus, select:focus { outline:none; }
-    .brow { transition:background 0.12s; cursor:pointer; }
-    .brow:hover { background:#f8f4ec !important; }
-    .goal-row:hover .del-btn { opacity:1 !important; }
-    .log-row:hover .del-btn  { opacity:1 !important; }
-    .tab-b:hover  { color:#1a1a1a !important; }
-    .add-btn:hover { border-color:#1a1a1a !important; color:#1a1a1a !important; }
-    .cal-day-cell:hover { border-color:#aaa !important; }
-  `
-
-  const inputStyle = { background:C.bg, border:`1px solid ${C.border}`, borderRadius:6, padding:'10px 14px', color:C.text, fontSize:'0.85rem', fontFamily:"'DM Sans', sans-serif" }
-  const saveBtnStyle = { background:C.text, border:'none', borderRadius:6, padding:'10px 20px', color:C.bg, fontFamily:"'DM Mono', monospace", fontSize:'0.65rem', letterSpacing:'0.06em', textTransform:'uppercase', cursor:'pointer' }
-  const cancelBtnStyle = { background:'transparent', border:`1px solid ${C.border}`, borderRadius:6, padding:'10px 20px', color:C.muted, fontFamily:"'DM Mono', monospace", fontSize:'0.65rem', letterSpacing:'0.06em', textTransform:'uppercase', cursor:'pointer' }
+  const G = (color) => `<style>@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap'); * { box-sizing: border-box; } ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; } input:focus, textarea:focus { outline: none; }</style>`
 
   return (
-    <div style={{ background:C.bg, minHeight:'100vh', color:C.text, fontFamily:"'DM Sans', sans-serif" }}>
-      <style>{css}</style>
+    <div style={{ background: COLORS.bg, minHeight: '100vh', color: COLORS.white, fontFamily: "'DM Sans', sans-serif" }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap'); * { box-sizing: border-box; } ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; } input:focus, textarea:focus { outline: none; } .block-row { transition: background 0.12s; cursor: pointer; } .block-row:hover { background: #1e1e1e !important; }`}</style>
 
       {/* HEADER */}
-      <div style={{ background:C.surface, borderBottom:`1px solid ${C.border}`, padding:'20px 32px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+      <div style={{ background: COLORS.surface, borderBottom: `1px solid ${COLORS.border}`, padding: '16px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <h1 style={{ fontFamily:"'DM Serif Display', serif", fontSize:'1.9rem', letterSpacing:'-0.5px', color:C.text, lineHeight:1 }}>Summer Training</h1>
-          <div style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.62rem', color:C.muted, letterSpacing:'0.06em', textTransform:'uppercase', marginTop:4 }}>
-            {DAY_NAMES[today.getDay()]}, {MONTH_NAMES[today.getMonth()]} {today.getDate()} · Temple Landry
+          <div style={{ fontFamily: 'Bebas Neue', fontSize: '1.9rem', letterSpacing: '0.12em', color: COLORS.red, lineHeight: 1 }}>ARENA TRAINING</div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '0.6rem', color: COLORS.muted, letterSpacing: '0.08em', marginTop: '3px' }}>
+            {DAY_NAMES[today.getDay()].toUpperCase()}, {MONTH_NAMES[today.getMonth()].toUpperCase()} {today.getDate()} · TEMPLE LANDRY
           </div>
         </div>
-        <div style={{ display:'flex', gap:32 }}>
-          {[{ val:streak, label:'Day Streak' },{ val:totalSessions, label:'Sessions' },{ val:`${goalsComplete}/${goals.length}`, label:'Goals' }].map(s => (
-            <div key={s.label} style={{ textAlign:'center' }}>
-              <div style={{ fontFamily:"'DM Serif Display', serif", fontSize:'1.7rem', color:C.text, lineHeight:1 }}>{s.val}</div>
-              <div style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.55rem', color:C.muted, letterSpacing:'0.06em', textTransform:'uppercase', marginTop:2 }}>{s.label}</div>
-            </div>
-          ))}
+        <div style={{ display: 'flex', gap: '24px' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontFamily: 'Bebas Neue', fontSize: '1.8rem', color: COLORS.red, lineHeight: 1 }}>{streak}</div>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '0.52rem', color: COLORS.muted, letterSpacing: '0.05em' }}>DAY STREAK</div>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontFamily: 'Bebas Neue', fontSize: '1.8rem', color: COLORS.white, lineHeight: 1 }}>{totalSessions}</div>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '0.52rem', color: COLORS.muted, letterSpacing: '0.05em' }}>SESSIONS</div>
+          </div>
         </div>
       </div>
 
       {/* TABS */}
-      <div style={{ display:'flex', borderBottom:`1px solid ${C.border}`, background:C.surface, paddingLeft:8 }}>
-        {TABS.map(t => (
-          <button key={t.id} className="tab-b" onClick={() => !t.locked && setTab(t.id)} style={{
-            background:'none', border:'none', cursor:t.locked ? 'default' : 'pointer',
-            padding:'12px 20px', fontFamily:"'DM Mono', monospace", fontSize:'0.63rem', letterSpacing:'0.08em', textTransform:'uppercase',
-            color: tab===t.id ? C.text : C.muted,
-            borderBottom: tab===t.id ? `2px solid ${C.text}` : '2px solid transparent',
-            opacity: t.locked ? 0.35 : 1, transition:'color 0.12s',
+      <div style={{ display: 'flex', borderBottom: `1px solid ${COLORS.border}`, background: COLORS.surface }}>
+        {[
+          { id: 'today', label: 'TODAY' },
+          { id: 'calendar', label: 'CALENDAR' },
+          { id: 'skills', label: 'SKILLS ↗', locked: true },
+        ].map(t => (
+          <button key={t.id} onClick={() => !t.locked && setTab(t.id)} style={{
+            background: 'none', border: 'none', cursor: t.locked ? 'default' : 'pointer',
+            padding: '12px 22px',
+            fontFamily: "'DM Mono', monospace", fontSize: '0.65rem', letterSpacing: '0.1em',
+            color: tab === t.id ? COLORS.red : t.locked ? COLORS.muted : COLORS.mutedLight,
+            borderBottom: tab === t.id ? `2px solid ${COLORS.red}` : '2px solid transparent',
+            opacity: t.locked ? 0.35 : 1,
           }}>{t.label}</button>
         ))}
       </div>
 
-      {loading && <div style={{ padding:'60px', textAlign:'center', fontFamily:"'DM Mono', monospace", fontSize:'0.7rem', color:C.muted, letterSpacing:'0.08em', textTransform:'uppercase' }}>Loading...</div>}
+      {loading && (
+        <div style={{ padding: '60px', textAlign: 'center', fontFamily: "'DM Mono', monospace", fontSize: '0.7rem', color: COLORS.muted, letterSpacing: '0.08em' }}>
+          LOADING...
+        </div>
+      )}
 
-      {/* TODAY */}
-      {!loading && tab==='today' && (
-        <div style={{ padding:'32px', maxWidth:600 }}>
+      {!loading && tab === 'today' && (
+        <div style={{ padding: '28px', maxWidth: '640px' }}>
           {!todayPlan.isActive ? (
-            <div style={{ textAlign:'center', padding:'80px 0' }}>
-              <div style={{ fontFamily:"'DM Serif Display', serif", fontSize:'2.8rem', color:C.border }}>Rest Day</div>
-              <div style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.68rem', color:C.muted, marginTop:8, textTransform:'uppercase', letterSpacing:'0.06em' }}>
+            <div style={{ textAlign: 'center', padding: '80px 0' }}>
+              <div style={{ fontFamily: 'Bebas Neue', fontSize: '4rem', letterSpacing: '0.1em', color: COLORS.border }}>REST DAY</div>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '0.7rem', color: COLORS.muted, marginTop: '8px' }}>
                 {today < WORK_START ? 'Training starts June 22' : 'Weekends off. Recover.'}
               </div>
-              <div style={{ marginTop:16, fontFamily:"'DM Mono', monospace", fontSize:'0.65rem', color:C.muted }}>Head to the <span onClick={()=>setTab('log')} style={{ textDecoration:'underline', cursor:'pointer' }}>Log tab</span> to track food & workouts.</div>
             </div>
           ) : (
             <>
-              <div style={{ marginBottom:28 }}>
-                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline', marginBottom:8 }}>
-                  <div style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.63rem', color:C.muted, letterSpacing:'0.06em', textTransform:'uppercase' }}>Today&apos;s Plan</div>
-                  <div style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.68rem', color:pct===100?'#2d5a28':C.muted }}>{done}/{total}{pct===100?' · Done ✓':`  ·  ${pct}%`}</div>
+              <div style={{ marginBottom: '24px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
+                  <div style={{ fontFamily: 'Bebas Neue', fontSize: '1.1rem', letterSpacing: '0.1em', color: COLORS.mutedLight }}>TODAY'S PLAN</div>
+                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '0.7rem', color: pct === 100 ? COLORS.red : COLORS.mutedLight }}>
+                    {todayDone}/{todayTotal} {pct === 100 ? '· DONE ✓' : `· ${pct}%`}
+                  </div>
                 </div>
-                <div style={{ height:2, background:C.border, borderRadius:1, overflow:'hidden' }}>
-                  <div style={{ height:'100%', width:`${pct}%`, background:C.text, borderRadius:1, transition:'width 0.4s ease' }}/>
+                <div style={{ height: '3px', background: COLORS.border, borderRadius: '2px', overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${pct}%`, background: COLORS.red, borderRadius: '2px', transition: 'width 0.4s ease' }} />
                 </div>
               </div>
-              <div style={{ display:'flex', flexDirection:'column', gap:6, marginBottom:36 }}>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '32px' }}>
                 {todayPlan.blocks.map(block => {
-                  const isDone = !!todayCI[block.id]
+                  const done = !!todayCheckins[block.id]
                   return (
-                    <div key={block.id} className="brow" onClick={() => toggleCheckin(today, block.id)} style={{ display:'flex', alignItems:'center', gap:14, background:isDone?block.color.bg:C.surface, border:`1px solid ${isDone?block.color.border:C.border}`, borderRadius:8, padding:'13px 16px' }}>
-                      <div style={{ width:20, height:20, borderRadius:'50%', flexShrink:0, border:`1.5px solid ${isDone?block.color.text:C.border}`, background:isDone?block.color.text:'transparent', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.15s' }}>
-                        {isDone && <span style={{ color:block.color.bg, fontSize:'0.6rem', fontWeight:800 }}>✓</span>}
+                    <div key={block.id} className="block-row" onClick={() => toggleCheckin(today, block.id)} style={{
+                      display: 'flex', alignItems: 'center', gap: '14px',
+                      background: done ? block.color.bg : COLORS.surface,
+                      border: `1px solid ${done ? block.color.border : COLORS.border}`,
+                      borderRadius: '8px', padding: '14px 18px',
+                    }}>
+                      <div style={{
+                        width: '22px', height: '22px', borderRadius: '50%', flexShrink: 0,
+                        border: `2px solid ${done ? block.color.text : COLORS.muted}`,
+                        background: done ? block.color.text : 'transparent',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        transition: 'all 0.15s',
+                      }}>
+                        {done && <span style={{ color: block.color.bg, fontSize: '0.65rem', fontWeight: 800 }}>✓</span>}
                       </div>
-                      <div style={{ flex:1 }}>
-                        <div style={{ fontWeight:600, fontSize:'0.88rem', color:isDone?block.color.text:C.text }}>{block.label}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 600, fontSize: '0.9rem', color: done ? block.color.text : COLORS.white }}>{block.label}</div>
+                        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '0.6rem', color: COLORS.muted, marginTop: '2px' }}>{block.time}</div>
                       </div>
-                      {isDone && <span style={{ fontSize:'0.58rem', fontFamily:"'DM Mono', monospace", padding:'2px 8px', borderRadius:10, background:block.color.text+'22', color:block.color.text, border:`1px solid ${block.color.border}`, letterSpacing:'0.04em' }}>DONE</span>}
+                      {done && <div style={{ fontFamily: 'Bebas Neue', fontSize: '0.82rem', letterSpacing: '0.08em', color: block.color.text }}>DONE</div>}
                     </div>
                   )
                 })}
               </div>
+
               <div>
-                <div style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.63rem', color:C.muted, letterSpacing:'0.06em', textTransform:'uppercase', marginBottom:14 }}>Coach Notes / Log</div>
+                <div style={{ fontFamily: 'Bebas Neue', fontSize: '1.1rem', letterSpacing: '0.1em', color: COLORS.mutedLight, marginBottom: '14px' }}>
+                  COACH NOTES / LOG
+                </div>
                 {todayNotes.length > 0 && (
-                  <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:12 }}>
-                    {todayNotes.map((n,i) => (
-                      <div key={i} style={{ background:C.surface, border:`1px solid ${C.border}`, borderRadius:8, padding:'12px 16px' }}>
-                        <div style={{ fontSize:'0.85rem', color:C.text, lineHeight:1.55 }}>{n.text}</div>
-                        <div style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.58rem', color:C.muted, marginTop:5 }}>{n.ts}</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
+                    {todayNotes.map((n, i) => (
+                      <div key={i} style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: '6px', padding: '12px 16px' }}>
+                        <div style={{ fontSize: '0.85rem', color: COLORS.white, lineHeight: 1.55 }}>{n.text}</div>
+                        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '0.58rem', color: COLORS.muted, marginTop: '5px' }}>{n.ts}</div>
                       </div>
                     ))}
                   </div>
                 )}
-                <div style={{ display:'flex', gap:8 }}>
-                  <input value={noteInput} onChange={e=>setNoteInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&saveNote()} placeholder="Add a note, coach correction, assignment..." style={{ flex:1, ...inputStyle }} />
-                  <button onClick={saveNote} disabled={saving} style={saveBtnStyle}>{saving?'...':'Save'}</button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    value={noteInput}
+                    onChange={e => setNoteInput(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && saveNote()}
+                    placeholder="Add a note, coach correction, assignment..."
+                    style={{
+                      flex: 1, background: COLORS.surface, border: `1px solid ${COLORS.border}`,
+                      borderRadius: '8px', padding: '12px 16px', color: COLORS.white,
+                      fontSize: '0.85rem', fontFamily: "'DM Sans', sans-serif",
+                    }}
+                  />
+                  <button onClick={saveNote} disabled={saving} style={{
+                    background: COLORS.red, border: 'none', borderRadius: '8px',
+                    padding: '12px 20px', color: 'white', fontFamily: 'Bebas Neue',
+                    fontSize: '0.9rem', letterSpacing: '0.08em', cursor: 'pointer',
+                  }}>
+                    {saving ? '...' : 'SAVE'}
+                  </button>
                 </div>
               </div>
             </>
@@ -325,42 +295,53 @@ export default function Home() {
         </div>
       )}
 
-      {/* CALENDAR */}
-      {!loading && tab==='calendar' && (
-        <div style={{ padding:'32px' }}>
-          <div style={{ display:'flex', gap:14, flexWrap:'wrap', marginBottom:28 }}>
-            {[{label:'Solid Core',color:C.solid},{label:'CorePower',color:C.cp},{label:'Lift',color:C.lift},{label:'Practice',color:C.gym},{label:'Work',color:C.work},{label:'Run',color:C.run},{label:'PT',color:C.pt}].map(l => (
-              <div key={l.label} style={{ display:'flex', alignItems:'center', gap:6 }}>
-                <div style={{ width:10, height:10, borderRadius:2, background:l.color.bg, border:`1px solid ${l.color.border}` }}/>
-                <span style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.6rem', color:C.mutedDark, textTransform:'uppercase', letterSpacing:'0.04em' }}>{l.label}</span>
+      {!loading && tab === 'calendar' && (
+        <div style={{ padding: '28px' }}>
+          <div style={{ display: 'flex', gap: '18px', flexWrap: 'wrap', marginBottom: '28px' }}>
+            {[
+              { label: 'Complete', color: COLORS.red },
+              { label: 'Partial', color: '#5a3a0a' },
+              { label: 'Missed', color: '#3a0a0a' },
+              { label: 'Future', color: COLORS.surface },
+            ].map(l => (
+              <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+                <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: l.color, border: `1px solid ${l.color}` }} />
+                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '0.62rem', color: COLORS.muted }}>{l.label}</span>
               </div>
             ))}
           </div>
-          {[[2026,5],[2026,6]].map(([yr,mo]) => {
+
+          {[[2026,5],[2026,6]].map(([yr, mo]) => {
             const cells = buildMonthCells(yr, mo)
             return (
-              <div key={mo} style={{ marginBottom:36 }}>
-                <div style={{ fontFamily:"'DM Serif Display', serif", fontSize:'1.4rem', color:C.text, marginBottom:10 }}>{MONTH_NAMES[mo]} {yr}</div>
-                <div style={{ display:'grid', gridTemplateColumns:'repeat(7, 1fr)', gap:3 }}>
-                  {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
-                    <div key={d} style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.58rem', color:C.muted, textAlign:'center', padding:'4px 0', letterSpacing:'0.05em', textTransform:'uppercase' }}>{d}</div>
+              <div key={mo} style={{ marginBottom: '36px' }}>
+                <div style={{ fontFamily: 'Bebas Neue', fontSize: '1.5rem', letterSpacing: '0.1em', color: COLORS.white, marginBottom: '10px' }}>
+                  {MONTH_NAMES[mo].toUpperCase()} {yr}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '3px' }}>
+                  {['SUN','MON','TUE','WED','THU','FRI','SAT'].map(d => (
+                    <div key={d} style={{ fontFamily: "'DM Mono', monospace", fontSize: '0.58rem', color: COLORS.muted, textAlign: 'center', padding: '4px 0', letterSpacing: '0.05em' }}>{d}</div>
                   ))}
-                  {cells.map((date,i) => {
-                    if (!date) return <div key={i}/>
-                    const plan    = getDayPlan(date)
-                    const isToday = dateKey(date)===todayKey
-                    const dc      = checkins[dateKey(date)]||{}
-                    const allDone = plan.isActive && plan.blocks.length>0 && plan.blocks.every(b=>dc[b.id])
+                  {cells.map((date, i) => {
+                    if (!date) return <div key={i} />
+                    const status = getDayStatus(date)
+                    const isToday = dateKey(date) === todayKey
+                    const hasNote = (notes[dateKey(date)] || []).length > 0
+                    const bgMap = { complete: COLORS.red, partial: '#3a2208', missed: '#2a0808', future: COLORS.surface, inactive: COLORS.bg }
                     return (
-                      <div key={i} className="cal-day-cell" style={{ background:plan.isWeekend?C.borderLight:plan.isActive?C.surface:'#fafaf7', border:`1px solid ${isToday?C.text:C.border}`, borderRadius:6, padding:'6px 7px', minHeight:88, opacity:plan.isWeekend?0.5:1, transition:'border-color 0.12s' }}>
-                        <div style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.65rem', color:plan.isActive?C.text:C.muted, fontWeight:isToday?700:400, marginBottom:4 }}>
-                          {date.getDate()}{allDone&&<span style={{ marginLeft:4, color:'#2d5a28', fontSize:'0.55rem' }}>✓</span>}
-                        </div>
-                        {plan.blocks.map(block => (
-                          <div key={block.id} style={{ display:'block', fontSize:'0.52rem', fontWeight:600, padding:'1px 4px', borderRadius:2, marginBottom:2, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', background:block.color.bg, color:block.color.text, border:`1px solid ${block.color.border}`, opacity:dc[block.id]?1:0.45 }}>
-                            {block.label}
-                          </div>
-                        ))}
+                      <div key={i} onClick={() => status !== 'inactive' && setTab('today')} style={{
+                        background: bgMap[status] || COLORS.bg,
+                        border: `1px solid ${isToday ? COLORS.red : '#222'}`,
+                        borderRadius: '4px', padding: '6px', minHeight: '46px',
+                        cursor: status !== 'inactive' ? 'pointer' : 'default',
+                        position: 'relative',
+                      }}>
+                        <div style={{
+                          fontFamily: "'DM Mono', monospace", fontSize: '0.65rem',
+                          color: status === 'complete' ? 'white' : status === 'inactive' ? '#2a2a2a' : COLORS.mutedLight,
+                          fontWeight: isToday ? 700 : 400,
+                        }}>{date.getDate()}</div>
+                        {hasNote && <div style={{ position: 'absolute', bottom: '5px', right: '5px', width: '5px', height: '5px', borderRadius: '50%', background: status === 'complete' ? 'rgba(255,255,255,0.5)' : COLORS.red }} />}
                       </div>
                     )
                   })}
@@ -368,167 +349,6 @@ export default function Home() {
               </div>
             )
           })}
-        </div>
-      )}
-
-      {/* LOG TAB */}
-      {!loading && tab==='log' && (
-        <div style={{ padding:'32px', maxWidth:660 }}>
-
-          <div style={{ fontFamily:"'DM Serif Display', serif", fontSize:'1.4rem', color:C.text, marginBottom:4 }}>
-            {DAY_NAMES[today.getDay()]}, {MONTH_NAMES[today.getMonth()]} {today.getDate()}
-          </div>
-          <div style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.6rem', color:C.muted, textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:32 }}>Daily log — food & workouts</div>
-
-          {/* FOOD LOG */}
-          <div style={{ marginBottom:36 }}>
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
-              <div style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.63rem', color:C.muted, letterSpacing:'0.06em', textTransform:'uppercase' }}>🍽️ Food Log</div>
-              <button onClick={()=>setAddingFood(!addingFood)} style={{ background:'transparent', border:`1.5px solid ${C.border}`, borderRadius:6, padding:'4px 12px', color:C.muted, fontFamily:"'DM Mono', monospace", fontSize:'0.6rem', letterSpacing:'0.06em', textTransform:'uppercase', cursor:'pointer' }}>
-                {addingFood ? 'Cancel' : '+ Add'}
-              </button>
-            </div>
-
-            {todayFood.length===0 && !addingFood && (
-              <div style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.65rem', color:C.muted, padding:'16px 0' }}>Nothing logged yet today.</div>
-            )}
-
-            <div style={{ display:'flex', flexDirection:'column', gap:6, marginBottom:addingFood?14:0 }}>
-              {MEAL_TYPES.map(mt => {
-                const entries = todayFood.filter(e => e.meal_type===mt.id)
-                if (entries.length===0) return null
-                return (
-                  <div key={mt.id}>
-                    <div style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.58rem', color:C.muted, textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:4 }}>{mt.icon} {mt.label}</div>
-                    {entries.map(entry => (
-                      <div key={entry.id} className="log-row" style={{ display:'flex', alignItems:'center', gap:10, background:C.surface, border:`1px solid ${C.border}`, borderRadius:7, padding:'10px 14px', marginBottom:4, position:'relative' }}>
-                        <div style={{ flex:1, fontSize:'0.85rem', color:C.text }}>{entry.description}</div>
-                        <button className="del-btn" onClick={()=>deleteFoodEntry(entry.id)} style={{ opacity:0, background:'none', border:'none', color:C.muted, cursor:'pointer', fontSize:'0.8rem', flexShrink:0, transition:'opacity 0.15s' }}>✕</button>
-                      </div>
-                    ))}
-                  </div>
-                )
-              })}
-            </div>
-
-            {addingFood && (
-              <div style={{ background:C.surface, border:`1px solid ${C.border}`, borderRadius:8, padding:'16px' }}>
-                <div style={{ display:'flex', gap:8, marginBottom:10 }}>
-                  <select value={newFood.meal_type} onChange={e=>setNewFood(p=>({...p,meal_type:e.target.value}))} style={{ flex:'0 0 140px', ...inputStyle }}>
-                    {MEAL_TYPES.map(mt=><option key={mt.id} value={mt.id}>{mt.icon} {mt.label}</option>)}
-                  </select>
-                  <input value={newFood.description} onChange={e=>setNewFood(p=>({...p,description:e.target.value}))} onKeyDown={e=>e.key==='Enter'&&saveFood()} placeholder="What did you eat?" style={{ flex:1, ...inputStyle }}/>
-                </div>
-                <div style={{ display:'flex', gap:8 }}>
-                  <button onClick={saveFood} style={saveBtnStyle}>Save</button>
-                  <button onClick={()=>setAddingFood(false)} style={cancelBtnStyle}>Cancel</button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* WORKOUT LOG */}
-          <div>
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
-              <div style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.63rem', color:C.muted, letterSpacing:'0.06em', textTransform:'uppercase' }}>💪 Workout Log</div>
-              <button onClick={()=>setAddingWorkout(!addingWorkout)} style={{ background:'transparent', border:`1.5px solid ${C.border}`, borderRadius:6, padding:'4px 12px', color:C.muted, fontFamily:"'DM Mono', monospace", fontSize:'0.6rem', letterSpacing:'0.06em', textTransform:'uppercase', cursor:'pointer' }}>
-                {addingWorkout ? 'Cancel' : '+ Add'}
-              </button>
-            </div>
-
-            {todayWorkouts.length===0 && !addingWorkout && (
-              <div style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.65rem', color:C.muted, padding:'16px 0' }}>No workouts logged yet.</div>
-            )}
-
-            <div style={{ display:'flex', flexDirection:'column', gap:6, marginBottom:addingWorkout?14:0 }}>
-              {todayWorkouts.map(w => (
-                <div key={w.id} className="log-row" style={{ display:'flex', alignItems:'flex-start', gap:12, background:C.surface, border:`1px solid ${C.border}`, borderRadius:7, padding:'12px 14px', position:'relative' }}>
-                  <div style={{ flex:1 }}>
-                    <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:w.notes?4:0 }}>
-                      <span style={{ fontWeight:600, fontSize:'0.88rem', color:C.text }}>{w.type}</span>
-                      {w.duration && <span style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.6rem', color:C.muted }}>{w.duration}</span>}
-                    </div>
-                    {w.notes && <div style={{ fontSize:'0.78rem', color:C.mutedDark, lineHeight:1.4 }}>{w.notes}</div>}
-                  </div>
-                  <button className="del-btn" onClick={()=>deleteWorkoutEntry(w.id)} style={{ opacity:0, background:'none', border:'none', color:C.muted, cursor:'pointer', fontSize:'0.8rem', flexShrink:0, transition:'opacity 0.15s' }}>✕</button>
-                </div>
-              ))}
-            </div>
-
-            {addingWorkout && (
-              <div style={{ background:C.surface, border:`1px solid ${C.border}`, borderRadius:8, padding:'16px' }}>
-                <div style={{ display:'flex', gap:8, marginBottom:10 }}>
-                  <select value={newWorkout.type} onChange={e=>setNewWorkout(p=>({...p,type:e.target.value}))} style={{ flex:1, ...inputStyle }}>
-                    {WORKOUT_TYPES.map(t=><option key={t} value={t}>{t}</option>)}
-                  </select>
-                  <input value={newWorkout.duration} onChange={e=>setNewWorkout(p=>({...p,duration:e.target.value}))} placeholder="Duration (e.g. 45 min)" style={{ flex:1, ...inputStyle }}/>
-                </div>
-                <input value={newWorkout.notes} onChange={e=>setNewWorkout(p=>({...p,notes:e.target.value}))} placeholder="Notes (optional)" style={{ width:'100%', ...inputStyle, marginBottom:10 }}/>
-                <div style={{ display:'flex', gap:8 }}>
-                  <button onClick={saveWorkout} style={saveBtnStyle}>Save</button>
-                  <button onClick={()=>setAddingWorkout(false)} style={cancelBtnStyle}>Cancel</button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* GOALS */}
-      {!loading && tab==='goals' && (
-        <div style={{ padding:'32px', maxWidth:660 }}>
-          <div style={{ display:'flex', gap:12, alignItems:'center', marginBottom:28 }}>
-            <div style={{ flex:1, height:2, background:C.border, borderRadius:1, overflow:'hidden' }}>
-              <div style={{ height:'100%', width:`${goals.length>0?Math.round((goalsComplete/goals.length)*100):0}%`, background:C.text, borderRadius:1, transition:'width 0.4s ease' }}/>
-            </div>
-            <div style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.65rem', color:C.muted, whiteSpace:'nowrap', textTransform:'uppercase', letterSpacing:'0.05em' }}>{goalsComplete}/{goals.length} Complete</div>
-          </div>
-          <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom:20 }}>
-            {[{id:'all',label:'All'},...CATS].map(f => (
-              <button key={f.id} onClick={()=>setFilterCat(f.id)} style={{ background:filterCat===f.id?C.text:'transparent', border:`1.5px solid ${filterCat===f.id?C.text:C.border}`, borderRadius:4, padding:'4px 12px', cursor:'pointer', fontFamily:"'DM Mono', monospace", fontSize:'0.6rem', letterSpacing:'0.06em', textTransform:'uppercase', color:filterCat===f.id?C.bg:C.muted, transition:'all 0.12s' }}>{f.label}</button>
-            ))}
-          </div>
-          <div style={{ display:'flex', flexDirection:'column', gap:6, marginBottom:20 }}>
-            {filteredGoals.length===0 && <div style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.68rem', color:C.muted, padding:'24px 0', textTransform:'uppercase', letterSpacing:'0.05em' }}>No goals yet — add one below.</div>}
-            {filteredGoals.map(goal => {
-              const cat = CATS.find(cc=>cc.id===goal.cat)||CATS[0]
-              return (
-                <div key={goal.id} className="goal-row brow" onClick={()=>toggleGoal(goal.id)} style={{ display:'flex', alignItems:'flex-start', gap:14, background:goal.done?'#eef5ee':C.surface, border:`1px solid ${goal.done?'#b8d4b5':C.border}`, borderRadius:8, padding:'13px 16px', cursor:'pointer', position:'relative' }}>
-                  <div style={{ marginTop:2, width:18, height:18, borderRadius:'50%', flexShrink:0, border:`1.5px solid ${goal.done?'#2d5a28':C.border}`, background:goal.done?'#2d5a28':'transparent', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.15s' }}>
-                    {goal.done && <span style={{ color:'white', fontSize:'0.58rem', fontWeight:800 }}>✓</span>}
-                  </div>
-                  <div style={{ flex:1, minWidth:0 }}>
-                    <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:2, flexWrap:'wrap' }}>
-                      <div style={{ fontWeight:600, fontSize:'0.88rem', color:goal.done?C.muted:C.text, textDecoration:goal.done?'line-through':'none' }}>{goal.title}</div>
-                      <span style={{ fontSize:'0.58rem', fontFamily:"'DM Mono', monospace", padding:'1px 7px', borderRadius:10, background:cat.color+'18', color:cat.color, border:`1px solid ${cat.color}33`, letterSpacing:'0.04em', textTransform:'uppercase' }}>{cat.label}</span>
-                    </div>
-                    {goal.deadline && <div style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.58rem', color:C.muted, marginBottom:goal.note?4:0 }}>Target: {goal.deadline}</div>}
-                    {goal.note && <div style={{ fontSize:'0.76rem', color:C.muted, lineHeight:1.45 }}>{goal.note}</div>}
-                  </div>
-                  <button className="del-btn" onClick={e=>{e.stopPropagation();deleteGoal(goal.id)}} style={{ opacity:0, background:'none', border:'none', color:C.muted, cursor:'pointer', fontSize:'0.85rem', padding:'0 4px', flexShrink:0, transition:'opacity 0.15s' }}>✕</button>
-                </div>
-              )
-            })}
-          </div>
-          {!addingGoal ? (
-            <button className="add-btn" onClick={()=>setAddingGoal(true)} style={{ width:'100%', background:'transparent', border:`1.5px dashed ${C.border}`, borderRadius:8, padding:'13px', color:C.muted, fontFamily:"'DM Mono', monospace", fontSize:'0.65rem', letterSpacing:'0.08em', textTransform:'uppercase', cursor:'pointer', transition:'border-color 0.12s, color 0.12s' }}>+ Add Goal</button>
-          ) : (
-            <div style={{ background:C.surface, border:`1px solid ${C.border}`, borderRadius:8, padding:'20px' }}>
-              <div style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.63rem', color:C.muted, letterSpacing:'0.06em', textTransform:'uppercase', marginBottom:14 }}>New Goal</div>
-              <input value={newGoal.title} onChange={e=>setNewGoal(p=>({...p,title:e.target.value}))} placeholder="Goal title..." style={{ width:'100%', ...inputStyle, marginBottom:10 }}/>
-              <div style={{ display:'flex', gap:8, marginBottom:10 }}>
-                <select value={newGoal.cat} onChange={e=>setNewGoal(p=>({...p,cat:e.target.value}))} style={{ flex:1, ...inputStyle }}>
-                  {CATS.map(cc=><option key={cc.id} value={cc.id}>{cc.label}</option>)}
-                </select>
-                <input value={newGoal.deadline} onChange={e=>setNewGoal(p=>({...p,deadline:e.target.value}))} placeholder="Target (e.g. Aug 5)" style={{ flex:1, ...inputStyle }}/>
-              </div>
-              <input value={newGoal.note} onChange={e=>setNewGoal(p=>({...p,note:e.target.value}))} placeholder="Notes or progression plan (optional)..." style={{ width:'100%', ...inputStyle, marginBottom:14 }}/>
-              <div style={{ display:'flex', gap:8 }}>
-                <button onClick={saveGoal} style={saveBtnStyle}>Save</button>
-                <button onClick={()=>setAddingGoal(false)} style={cancelBtnStyle}>Cancel</button>
-              </div>
-            </div>
-          )}
         </div>
       )}
     </div>
