@@ -92,6 +92,9 @@ export default function Home() {
   const [newWorkout, setNewWorkout] = useState({ type:'Gymnastics', duration:'', notes:'' })
   const [addingWorkout, setAddingWorkout] = useState(false)
 
+  // Log tab date navigation
+  const [logDate, setLogDate] = useState(new Date())
+
   useEffect(() => { loadData() }, [])
 
   async function loadData() {
@@ -151,28 +154,28 @@ export default function Home() {
 
   async function saveFood() {
     if (!newFood.description.trim()) return
-    const key = dateKey(today)
+    const key = dateKey(logDate)
     const { data } = await supabase.from('food_log').insert({ date_key:key, meal_type:newFood.meal_type, description:newFood.description.trim() }).select().single()
     if (data) setFoodLog(prev => ({ ...prev, [key]:[...(prev[key]||[]), data] }))
     setNewFood({ meal_type:'breakfast', description:'' }); setAddingFood(false)
   }
 
   async function deleteFoodEntry(id) {
-    const key = dateKey(today)
+    const key = dateKey(logDate)
     setFoodLog(prev => ({ ...prev, [key]:(prev[key]||[]).filter(e => e.id!==id) }))
     await supabase.from('food_log').delete().eq('id', id)
   }
 
   async function saveWorkout() {
     if (!newWorkout.type) return
-    const key = dateKey(today)
+    const key = dateKey(logDate)
     const { data } = await supabase.from('workout_log').insert({ date_key:key, type:newWorkout.type, duration:newWorkout.duration||null, notes:newWorkout.notes||null }).select().single()
     if (data) setWorkoutLog(prev => ({ ...prev, [key]:[...(prev[key]||[]), data] }))
     setNewWorkout({ type:'Gymnastics', duration:'', notes:'' }); setAddingWorkout(false)
   }
 
   async function deleteWorkoutEntry(id) {
-    const key = dateKey(today)
+    const key = dateKey(logDate)
     setWorkoutLog(prev => ({ ...prev, [key]:(prev[key]||[]).filter(e => e.id!==id) }))
     await supabase.from('workout_log').delete().eq('id', id)
   }
@@ -181,8 +184,10 @@ export default function Home() {
   const todayPlan     = getDayPlan(today)
   const todayCI       = checkins[todayKey]  || {}
   const todayNotes    = notes[todayKey]     || []
-  const todayFood     = foodLog[todayKey]   || []
-  const todayWorkouts = workoutLog[todayKey]|| []
+  const logDateKey    = dateKey(logDate)
+  const logFood       = foodLog[logDateKey]   || []
+  const logWorkouts   = workoutLog[logDateKey]|| []
+  const isLogToday    = logDateKey === todayKey
   const done          = todayPlan.blocks.filter(b => todayCI[b.id]).length
   const total         = todayPlan.blocks.length
   const pct           = total > 0 ? Math.round((done/total)*100) : 0
@@ -267,7 +272,7 @@ export default function Home() {
 
       {/* TODAY */}
       {!loading && tab==='today' && (
-        <div style={{ padding:'32px', maxWidth:600 }}>
+        <div style={{ padding:'32px 48px', maxWidth:800, margin:'0 auto' }}>
           {!todayPlan.isActive ? (
             <div style={{ textAlign:'center', padding:'80px 0' }}>
               <div style={{ fontFamily:"'DM Serif Display', serif", fontSize:'2.8rem', color:C.border }}>Rest Day</div>
@@ -327,7 +332,7 @@ export default function Home() {
 
       {/* CALENDAR */}
       {!loading && tab==='calendar' && (
-        <div style={{ padding:'32px' }}>
+        <div style={{ padding:'32px 48px', maxWidth:1200, margin:'0 auto' }}>
           <div style={{ display:'flex', gap:14, flexWrap:'wrap', marginBottom:28 }}>
             {[{label:'Solid Core',color:C.solid},{label:'CorePower',color:C.cp},{label:'Lift',color:C.lift},{label:'Practice',color:C.gym},{label:'Work',color:C.work},{label:'Run',color:C.run},{label:'PT',color:C.pt}].map(l => (
               <div key={l.label} style={{ display:'flex', alignItems:'center', gap:6 }}>
@@ -373,110 +378,127 @@ export default function Home() {
 
       {/* LOG TAB */}
       {!loading && tab==='log' && (
-        <div style={{ padding:'32px', maxWidth:660 }}>
+        <div style={{ padding:'32px 48px', maxWidth:1200, margin:'0 auto' }}>
 
-          <div style={{ fontFamily:"'DM Serif Display', serif", fontSize:'1.4rem', color:C.text, marginBottom:4 }}>
-            {DAY_NAMES[today.getDay()]}, {MONTH_NAMES[today.getMonth()]} {today.getDate()}
-          </div>
-          <div style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.6rem', color:C.muted, textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:32 }}>Daily log — food & workouts</div>
-
-          {/* FOOD LOG */}
-          <div style={{ marginBottom:36 }}>
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
-              <div style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.63rem', color:C.muted, letterSpacing:'0.06em', textTransform:'uppercase' }}>🍽️ Food Log</div>
-              <button onClick={()=>setAddingFood(!addingFood)} style={{ background:'transparent', border:`1.5px solid ${C.border}`, borderRadius:6, padding:'4px 12px', color:C.muted, fontFamily:"'DM Mono', monospace", fontSize:'0.6rem', letterSpacing:'0.06em', textTransform:'uppercase', cursor:'pointer' }}>
-                {addingFood ? 'Cancel' : '+ Add'}
-              </button>
-            </div>
-
-            {todayFood.length===0 && !addingFood && (
-              <div style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.65rem', color:C.muted, padding:'16px 0' }}>Nothing logged yet today.</div>
-            )}
-
-            <div style={{ display:'flex', flexDirection:'column', gap:6, marginBottom:addingFood?14:0 }}>
-              {MEAL_TYPES.map(mt => {
-                const entries = todayFood.filter(e => e.meal_type===mt.id)
-                if (entries.length===0) return null
-                return (
-                  <div key={mt.id}>
-                    <div style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.58rem', color:C.muted, textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:4 }}>{mt.icon} {mt.label}</div>
-                    {entries.map(entry => (
-                      <div key={entry.id} className="log-row" style={{ display:'flex', alignItems:'center', gap:10, background:C.surface, border:`1px solid ${C.border}`, borderRadius:7, padding:'10px 14px', marginBottom:4, position:'relative' }}>
-                        <div style={{ flex:1, fontSize:'0.85rem', color:C.text }}>{entry.description}</div>
-                        <button className="del-btn" onClick={()=>deleteFoodEntry(entry.id)} style={{ opacity:0, background:'none', border:'none', color:C.muted, cursor:'pointer', fontSize:'0.8rem', flexShrink:0, transition:'opacity 0.15s' }}>✕</button>
-                      </div>
-                    ))}
-                  </div>
-                )
-              })}
-            </div>
-
-            {addingFood && (
-              <div style={{ background:C.surface, border:`1px solid ${C.border}`, borderRadius:8, padding:'16px' }}>
-                <div style={{ display:'flex', gap:8, marginBottom:10 }}>
-                  <select value={newFood.meal_type} onChange={e=>setNewFood(p=>({...p,meal_type:e.target.value}))} style={{ flex:'0 0 140px', ...inputStyle }}>
-                    {MEAL_TYPES.map(mt=><option key={mt.id} value={mt.id}>{mt.icon} {mt.label}</option>)}
-                  </select>
-                  <input value={newFood.description} onChange={e=>setNewFood(p=>({...p,description:e.target.value}))} onKeyDown={e=>e.key==='Enter'&&saveFood()} placeholder="What did you eat?" style={{ flex:1, ...inputStyle }}/>
-                </div>
-                <div style={{ display:'flex', gap:8 }}>
-                  <button onClick={saveFood} style={saveBtnStyle}>Save</button>
-                  <button onClick={()=>setAddingFood(false)} style={cancelBtnStyle}>Cancel</button>
-                </div>
+          {/* Date Navigation */}
+          <div style={{ display:'flex', alignItems:'center', gap:16, marginBottom:24 }}>
+            <button onClick={() => setLogDate(d => { const nd=new Date(d); nd.setDate(nd.getDate()-1); return nd })} style={{ background:'transparent', border:`1.5px solid ${C.border}`, borderRadius:6, padding:'8px 14px', color:C.muted, fontFamily:"'DM Mono', monospace", fontSize:'0.7rem', cursor:'pointer' }}>← Prev</button>
+            <div style={{ flex:1, textAlign:'center' }}>
+              <div style={{ fontFamily:"'DM Serif Display', serif", fontSize:'1.5rem', color:C.text }}>
+                {DAY_NAMES[logDate.getDay()]}, {MONTH_NAMES[logDate.getMonth()]} {logDate.getDate()}
               </div>
+              <div style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.6rem', color:C.muted, textTransform:'uppercase', letterSpacing:'0.06em', marginTop:2 }}>
+                {isLogToday ? 'Today' : logDate.getFullYear()}
+              </div>
+            </div>
+            <button onClick={() => setLogDate(d => { const nd=new Date(d); nd.setDate(nd.getDate()+1); return nd })} style={{ background:'transparent', border:`1.5px solid ${C.border}`, borderRadius:6, padding:'8px 14px', color:C.muted, fontFamily:"'DM Mono', monospace", fontSize:'0.7rem', cursor:'pointer' }}>Next →</button>
+            {!isLogToday && (
+              <button onClick={() => setLogDate(new Date())} style={{ background:C.text, border:'none', borderRadius:6, padding:'8px 14px', color:C.bg, fontFamily:"'DM Mono', monospace", fontSize:'0.65rem', letterSpacing:'0.04em', textTransform:'uppercase', cursor:'pointer' }}>Today</button>
             )}
           </div>
 
-          {/* WORKOUT LOG */}
-          <div>
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
-              <div style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.63rem', color:C.muted, letterSpacing:'0.06em', textTransform:'uppercase' }}>💪 Workout Log</div>
-              <button onClick={()=>setAddingWorkout(!addingWorkout)} style={{ background:'transparent', border:`1.5px solid ${C.border}`, borderRadius:6, padding:'4px 12px', color:C.muted, fontFamily:"'DM Mono', monospace", fontSize:'0.6rem', letterSpacing:'0.06em', textTransform:'uppercase', cursor:'pointer' }}>
-                {addingWorkout ? 'Cancel' : '+ Add'}
-              </button>
-            </div>
+          {/* Desktop 2-column layout */}
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:32 }}>
 
-            {todayWorkouts.length===0 && !addingWorkout && (
-              <div style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.65rem', color:C.muted, padding:'16px 0' }}>No workouts logged yet.</div>
-            )}
+            {/* FOOD LOG */}
+            <div style={{ background:C.surface, border:`1px solid ${C.border}`, borderRadius:12, padding:'24px' }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
+                <div style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.7rem', color:C.muted, letterSpacing:'0.06em', textTransform:'uppercase' }}>Food Log</div>
+                <button onClick={()=>setAddingFood(!addingFood)} className="add-btn" style={{ background:'transparent', border:`1.5px solid ${C.border}`, borderRadius:6, padding:'6px 14px', color:C.muted, fontFamily:"'DM Mono', monospace", fontSize:'0.6rem', letterSpacing:'0.06em', textTransform:'uppercase', cursor:'pointer' }}>
+                  {addingFood ? 'Cancel' : '+ Add'}
+                </button>
+              </div>
 
-            <div style={{ display:'flex', flexDirection:'column', gap:6, marginBottom:addingWorkout?14:0 }}>
-              {todayWorkouts.map(w => (
-                <div key={w.id} className="log-row" style={{ display:'flex', alignItems:'flex-start', gap:12, background:C.surface, border:`1px solid ${C.border}`, borderRadius:7, padding:'12px 14px', position:'relative' }}>
-                  <div style={{ flex:1 }}>
-                    <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:w.notes?4:0 }}>
-                      <span style={{ fontWeight:600, fontSize:'0.88rem', color:C.text }}>{w.type}</span>
-                      {w.duration && <span style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.6rem', color:C.muted }}>{w.duration}</span>}
+              {logFood.length===0 && !addingFood && (
+                <div style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.7rem', color:C.muted, padding:'32px 0', textAlign:'center' }}>No food logged{isLogToday ? ' yet today' : ' this day'}.</div>
+              )}
+
+              <div style={{ display:'flex', flexDirection:'column', gap:12, marginBottom:addingFood?16:0 }}>
+                {MEAL_TYPES.map(mt => {
+                  const entries = logFood.filter(e => e.meal_type===mt.id)
+                  if (entries.length===0) return null
+                  return (
+                    <div key={mt.id}>
+                      <div style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.62rem', color:C.muted, textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:6 }}>{mt.icon} {mt.label}</div>
+                      {entries.map(entry => (
+                        <div key={entry.id} className="log-row" style={{ display:'flex', alignItems:'center', gap:12, background:C.bg, border:`1px solid ${C.borderLight}`, borderRadius:8, padding:'12px 16px', marginBottom:6 }}>
+                          <div style={{ flex:1, fontSize:'0.9rem', color:C.text }}>{entry.description}</div>
+                          <button className="del-btn" onClick={()=>deleteFoodEntry(entry.id)} style={{ opacity:0, background:'none', border:'none', color:C.muted, cursor:'pointer', fontSize:'0.85rem', flexShrink:0, transition:'opacity 0.15s' }}>x</button>
+                        </div>
+                      ))}
                     </div>
-                    {w.notes && <div style={{ fontSize:'0.78rem', color:C.mutedDark, lineHeight:1.4 }}>{w.notes}</div>}
+                  )
+                })}
+              </div>
+
+              {addingFood && (
+                <div style={{ background:C.bg, border:`1px solid ${C.borderLight}`, borderRadius:10, padding:'18px' }}>
+                  <div style={{ display:'flex', gap:10, marginBottom:12 }}>
+                    <select value={newFood.meal_type} onChange={e=>setNewFood(p=>({...p,meal_type:e.target.value}))} style={{ flex:'0 0 150px', ...inputStyle }}>
+                      {MEAL_TYPES.map(mt=><option key={mt.id} value={mt.id}>{mt.icon} {mt.label}</option>)}
+                    </select>
+                    <input value={newFood.description} onChange={e=>setNewFood(p=>({...p,description:e.target.value}))} onKeyDown={e=>e.key==='Enter'&&saveFood()} placeholder="What did you eat?" style={{ flex:1, ...inputStyle }}/>
                   </div>
-                  <button className="del-btn" onClick={()=>deleteWorkoutEntry(w.id)} style={{ opacity:0, background:'none', border:'none', color:C.muted, cursor:'pointer', fontSize:'0.8rem', flexShrink:0, transition:'opacity 0.15s' }}>✕</button>
+                  <div style={{ display:'flex', gap:10 }}>
+                    <button onClick={saveFood} style={saveBtnStyle}>Save</button>
+                    <button onClick={()=>setAddingFood(false)} style={cancelBtnStyle}>Cancel</button>
+                  </div>
                 </div>
-              ))}
+              )}
             </div>
 
-            {addingWorkout && (
-              <div style={{ background:C.surface, border:`1px solid ${C.border}`, borderRadius:8, padding:'16px' }}>
-                <div style={{ display:'flex', gap:8, marginBottom:10 }}>
-                  <select value={newWorkout.type} onChange={e=>setNewWorkout(p=>({...p,type:e.target.value}))} style={{ flex:1, ...inputStyle }}>
-                    {WORKOUT_TYPES.map(t=><option key={t} value={t}>{t}</option>)}
-                  </select>
-                  <input value={newWorkout.duration} onChange={e=>setNewWorkout(p=>({...p,duration:e.target.value}))} placeholder="Duration (e.g. 45 min)" style={{ flex:1, ...inputStyle }}/>
-                </div>
-                <input value={newWorkout.notes} onChange={e=>setNewWorkout(p=>({...p,notes:e.target.value}))} placeholder="Notes (optional)" style={{ width:'100%', ...inputStyle, marginBottom:10 }}/>
-                <div style={{ display:'flex', gap:8 }}>
-                  <button onClick={saveWorkout} style={saveBtnStyle}>Save</button>
-                  <button onClick={()=>setAddingWorkout(false)} style={cancelBtnStyle}>Cancel</button>
-                </div>
+            {/* WORKOUT LOG */}
+            <div style={{ background:C.surface, border:`1px solid ${C.border}`, borderRadius:12, padding:'24px' }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
+                <div style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.7rem', color:C.muted, letterSpacing:'0.06em', textTransform:'uppercase' }}>Workout Log</div>
+                <button onClick={()=>setAddingWorkout(!addingWorkout)} className="add-btn" style={{ background:'transparent', border:`1.5px solid ${C.border}`, borderRadius:6, padding:'6px 14px', color:C.muted, fontFamily:"'DM Mono', monospace", fontSize:'0.6rem', letterSpacing:'0.06em', textTransform:'uppercase', cursor:'pointer' }}>
+                  {addingWorkout ? 'Cancel' : '+ Add'}
+                </button>
               </div>
-            )}
+
+              {logWorkouts.length===0 && !addingWorkout && (
+                <div style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.7rem', color:C.muted, padding:'32px 0', textAlign:'center' }}>No workouts logged{isLogToday ? ' yet' : ' this day'}.</div>
+              )}
+
+              <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:addingWorkout?16:0 }}>
+                {logWorkouts.map(w => (
+                  <div key={w.id} className="log-row" style={{ display:'flex', alignItems:'flex-start', gap:14, background:C.bg, border:`1px solid ${C.borderLight}`, borderRadius:8, padding:'14px 16px' }}>
+                    <div style={{ flex:1 }}>
+                      <div style={{ display:'flex', gap:10, alignItems:'center', marginBottom:w.notes?6:0 }}>
+                        <span style={{ fontWeight:600, fontSize:'0.95rem', color:C.text }}>{w.type}</span>
+                        {w.duration && <span style={{ fontFamily:"'DM Mono', monospace", fontSize:'0.65rem', color:C.muted, background:C.borderLight, padding:'2px 8px', borderRadius:4 }}>{w.duration}</span>}
+                      </div>
+                      {w.notes && <div style={{ fontSize:'0.82rem', color:C.mutedDark, lineHeight:1.45 }}>{w.notes}</div>}
+                    </div>
+                    <button className="del-btn" onClick={()=>deleteWorkoutEntry(w.id)} style={{ opacity:0, background:'none', border:'none', color:C.muted, cursor:'pointer', fontSize:'0.85rem', flexShrink:0, transition:'opacity 0.15s' }}>x</button>
+                  </div>
+                ))}
+              </div>
+
+              {addingWorkout && (
+                <div style={{ background:C.bg, border:`1px solid ${C.borderLight}`, borderRadius:10, padding:'18px' }}>
+                  <div style={{ display:'flex', gap:10, marginBottom:12 }}>
+                    <select value={newWorkout.type} onChange={e=>setNewWorkout(p=>({...p,type:e.target.value}))} style={{ flex:1, ...inputStyle }}>
+                      {WORKOUT_TYPES.map(t=><option key={t} value={t}>{t}</option>)}
+                    </select>
+                    <input value={newWorkout.duration} onChange={e=>setNewWorkout(p=>({...p,duration:e.target.value}))} placeholder="Duration (e.g. 45 min)" style={{ flex:1, ...inputStyle }}/>
+                  </div>
+                  <input value={newWorkout.notes} onChange={e=>setNewWorkout(p=>({...p,notes:e.target.value}))} placeholder="Notes (optional)" style={{ width:'100%', ...inputStyle, marginBottom:12 }}/>
+                  <div style={{ display:'flex', gap:10 }}>
+                    <button onClick={saveWorkout} style={saveBtnStyle}>Save</button>
+                    <button onClick={()=>setAddingWorkout(false)} style={cancelBtnStyle}>Cancel</button>
+                  </div>
+                </div>
+              )}
+            </div>
+
           </div>
         </div>
       )}
 
       {/* GOALS */}
       {!loading && tab==='goals' && (
-        <div style={{ padding:'32px', maxWidth:660 }}>
+        <div style={{ padding:'32px 48px', maxWidth:900, margin:'0 auto' }}>
           <div style={{ display:'flex', gap:12, alignItems:'center', marginBottom:28 }}>
             <div style={{ flex:1, height:2, background:C.border, borderRadius:1, overflow:'hidden' }}>
               <div style={{ height:'100%', width:`${goals.length>0?Math.round((goalsComplete/goals.length)*100):0}%`, background:C.text, borderRadius:1, transition:'width 0.4s ease' }}/>
