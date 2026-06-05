@@ -389,7 +389,7 @@ export default function Home() {
       <style>{css}</style>
 
       {/* HEADER */}
-      <div style={{background:C.surface,borderBottom:`1px solid ${C.border}`,padding:'20px 32px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+      <div style={{background:C.surface,borderBottom:`1px solid ${C.border}`,padding:'20px 48px',display:'flex',alignItems:'center',justifyContent:'space-between',maxWidth:1200,margin:'0 auto'}}>
         <div>
           <h1 style={{fontFamily:"'DM Serif Display',serif",fontSize:'1.9rem',letterSpacing:'-0.5px',color:C.text,lineHeight:1}}>Summer Training</h1>
           <div style={{fontFamily:"'DM Mono',monospace",fontSize:'0.62rem',color:C.muted,letterSpacing:'0.06em',textTransform:'uppercase',marginTop:4}}>
@@ -407,7 +407,7 @@ export default function Home() {
       </div>
 
       {/* TABS */}
-      <div style={{display:'flex',borderBottom:`1px solid ${C.border}`,background:C.surface,paddingLeft:8,overflowX:'auto'}}>
+      <div style={{display:'flex',borderBottom:`1px solid ${C.border}`,background:C.surface,paddingLeft:48,overflowX:'auto',maxWidth:1200,margin:'0 auto'}}>
         {TABS.map(t=>(
           <button key={t.id} className="tab-b" onClick={()=>setTab(t.id)} style={{
             background:'none',border:'none',cursor:'pointer',whiteSpace:'nowrap',
@@ -423,7 +423,7 @@ export default function Home() {
 
       {/* ── TODAY ── */}
       {!loading&&tab==='today'&&(
-        <div style={{padding:'32px',maxWidth:600}}>
+        <div style={{padding:'32px 48px',maxWidth:900,margin:'0 auto'}}>
 
           <AICard text={dailyBrief} loading={briefLoading} onGenerate={generateDailyBrief} label="Daily Brief" icon="✦" />
 
@@ -479,7 +479,7 @@ export default function Home() {
 
       {/* ── CALENDAR ── */}
       {!loading&&tab==='calendar'&&(
-        <div style={{padding:'32px'}}>
+        <div style={{padding:'32px 48px',maxWidth:1100,margin:'0 auto'}}>
           <div style={{display:'flex',gap:14,flexWrap:'wrap',marginBottom:28}}>
             {[{label:'Solid Core',color:C.solid},{label:'CorePower',color:C.cp},{label:'Lift',color:C.lift},{label:'Practice',color:C.gym},{label:'Work',color:C.work},{label:'Run',color:C.run},{label:'PT',color:C.pt}].map(l=>(
               <div key={l.label} style={{display:'flex',alignItems:'center',gap:6}}>
@@ -523,7 +523,7 @@ export default function Home() {
 
       {/* ── LOG ── */}
       {!loading&&tab==='log'&&(
-        <div style={{padding:'32px',maxWidth:660}}>
+        <div style={{padding:'32px 48px',maxWidth:900,margin:'0 auto'}}>
           <div style={{fontFamily:"'DM Serif Display',serif",fontSize:'1.4rem',color:C.text,marginBottom:4}}>{DAY_NAMES[today.getDay()]}, {MONTH_NAMES[today.getMonth()]} {today.getDate()}</div>
           <div style={{fontFamily:"'DM Mono',monospace",fontSize:'0.6rem',color:C.muted,textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:32}}>Daily log — food & workouts</div>
 
@@ -618,7 +618,7 @@ export default function Home() {
 
       {/* ── SKILLS ── */}
       {!loading&&tab==='skills'&&(
-        <div style={{padding:'32px',maxWidth:700}}>
+        <div style={{padding:'32px 48px',maxWidth:900,margin:'0 auto'}}>
           <div style={{fontFamily:"'DM Serif Display',serif",fontSize:'1.4rem',color:C.text,marginBottom:4}}>Skills Tracker</div>
           <div style={{fontFamily:"'DM Mono',monospace",fontSize:'0.6rem',color:C.muted,textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:28}}>Log practice · AI structures your notes · patterns surface over time</div>
 
@@ -712,7 +712,7 @@ export default function Home() {
 
       {/* ── GOALS ── */}
       {!loading&&tab==='goals'&&(
-        <div style={{padding:'32px',maxWidth:660}}>
+        <div style={{padding:'32px 48px',maxWidth:900,margin:'0 auto'}}>
 
           <AICard text={goalNudge} loading={nudgeLoading} onGenerate={generateGoalNudge} label="Goal Nudge" icon="◆"/>
 
@@ -776,7 +776,7 @@ export default function Home() {
 
       {/* ── WEEKLY ── */}
       {!loading&&tab==='weekly'&&(
-        <div style={{padding:'32px',maxWidth:640}}>
+        <div style={{padding:'32px 48px',maxWidth:900,margin:'0 auto'}}>
           <div style={{fontFamily:"'DM Serif Display',serif",fontSize:'1.4rem',color:C.text,marginBottom:4}}>Weekly Review</div>
           <div style={{fontFamily:"'DM Mono',monospace",fontSize:'0.6rem',color:C.muted,textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:28}}>Last 7 days</div>
 
