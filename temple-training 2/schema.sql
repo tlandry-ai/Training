@@ -16,6 +16,62 @@ create table notes (
   created_at timestamptz default now()
 );
 
--- Disable RLS (private app, no multi-user)
-alter table checkins disable row level security;
-alter table notes disable row level security;
+create table goals (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  cat text not null default 'gym',
+  deadline text,
+  note text,
+  done boolean not null default false,
+  created_at timestamptz default now()
+);
+
+create table food_log (
+  id uuid primary key default gen_random_uuid(),
+  date_key text not null,
+  meal_type text not null,
+  description text not null,
+  ai_protein text,
+  ai_carbs text,
+  ai_fats text,
+  ai_note text,
+  created_at timestamptz default now()
+);
+
+create table workout_log (
+  id uuid primary key default gen_random_uuid(),
+  date_key text not null,
+  type text not null,
+  duration text,
+  notes text,
+  created_at timestamptz default now()
+);
+
+create table skills (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  event text,
+  created_at timestamptz default now()
+);
+
+create table practice_entries (
+  id uuid primary key default gen_random_uuid(),
+  date_key text not null,
+  skill_id uuid references skills(id) on delete cascade,
+  skill_name text not null,
+  entry text not null,
+  ai_went_well text,
+  ai_needs_work text,
+  ai_coach_feedback text,
+  ai_pattern text,
+  created_at timestamptz default now()
+);
+
+-- Disable RLS (private app, just you)
+alter table checkins        disable row level security;
+alter table notes           disable row level security;
+alter table goals           disable row level security;
+alter table food_log        disable row level security;
+alter table workout_log     disable row level security;
+alter table skills          disable row level security;
+alter table practice_entries disable row level security;
