@@ -24,6 +24,15 @@ const MEAL_TYPES = [
 const WORKOUT_TYPES = ['Gymnastics','Lift','Pilates','Run','CorePower','Solid Core','PT','Walk','Swim','Other']
 const GYM_EVENTS    = ['Bars','Beam','Floor','Vault','All-Around','Conditioning','General']
 
+const HABITS = [
+  { id:'sleep',     label:'Sleep 8+ hrs',          color:C.cp   },
+  { id:'hydration', label:'Hydration',             color:C.pt   },
+  { id:'stretch',   label:'Stretch / mobility',    color:C.solid},
+  { id:'nutrition', label:'Nutrition on point',    color:C.lift },
+  { id:'mental',    label:'Mental focus / visual', color:C.gym  },
+  { id:'recovery',  label:'Recovery (roll/ice/rest)', color:C.run},
+]
+
 const CATS = [
   { id:'gym',     label:'Gymnastics', color:'#4a1a7a' },
   { id:'fitness', label:'Fitness',    color:'#7a3d1a' },
@@ -81,6 +90,15 @@ function getLast7Keys() {
   return keys
 }
 
+function getLastNKeys(n) {
+  const keys = []
+  for (let i=0; i<n; i++) {
+    const d = new Date(); d.setDate(d.getDate()-i)
+    keys.push(dateKey(d))
+  }
+  return keys
+}
+
 // ─── Shared sub-components ───────────────────────────────────────────────────
 const SectionLabel = ({ children }) => (
   <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'0.63rem', color:'#aaa', letterSpacing:'0.06em', textTransform:'uppercase', marginBottom:14 }}>{children}</div>
@@ -127,6 +145,7 @@ export default function Home() {
 
   // Data state
   const [checkins, setCheckins]       = useState({})
+  const [habits, setHabits]           = useState({})
   const [notes, setNotes]             = useState({})
   const [goals, setGoals]             = useState([])
   const [foodLog, setFoodLog]         = useState({})
@@ -164,8 +183,9 @@ export default function Home() {
   // ── Data loading ──────────────────────────────────────────────────────────
   async function loadData() {
     setLoading(true)
-    const [{ data:ci },{ data:no },{ data:go },{ data:fl },{ data:wl },{ data:sk },{ data:pe }] = await Promise.all([
+    const [{ data:ci },{ data:hc },{ data:no },{ data:go },{ data:fl },{ data:wl },{ data:sk },{ data:pe }] = await Promise.all([
       supabase.from('checkins').select('*'),
+      supabase.from('habit_checkins').select('*'),
       supabase.from('notes').select('*').order('created_at',{ascending:true}),
       supabase.from('goals').select('*').order('created_at',{ascending:true}),
       supabase.from('food_log').select('*').order('created_at',{ascending:true}),
@@ -174,10 +194,11 @@ export default function Home() {
       supabase.from('practice_entries').select('*').order('created_at',{ascending:true}),
     ])
     const ciMap={}; (ci||[]).forEach(r=>{if(!ciMap[r.date_key])ciMap[r.date_key]={};ciMap[r.date_key][r.block_id]=r.done})
+    const hcMap={}; (hc||[]).forEach(r=>{if(!hcMap[r.date_key])hcMap[r.date_key]={};hcMap[r.date_key][r.habit_id]=r.rating})
     const noMap={}; (no||[]).forEach(r=>{if(!noMap[r.date_key])noMap[r.date_key]=[];noMap[r.date_key].push({text:r.text,ts:new Date(r.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})})})
     const flMap={}; (fl||[]).forEach(r=>{if(!flMap[r.date_key])flMap[r.date_key]=[];flMap[r.date_key].push(r)})
     const wlMap={}; (wl||[]).forEach(r=>{if(!wlMap[r.date_key])wlMap[r.date_key]=[];wlMap[r.date_key].push(r)})
-    setCheckins(ciMap); setNotes(noMap); setGoals(go||[]); setFoodLog(flMap); setWorkoutLog(wlMap)
+    setCheckins(ciMap); setHabits(hcMap); setNotes(noMap); setGoals(go||[]); setFoodLog(flMap); setWorkoutLog(wlMap)
     setSkills(sk||[]); setPracticeEntries(pe||[])
     setLoading(false)
   }
@@ -227,6 +248,15 @@ export default function Home() {
     const key=dateKey(date); const cur=checkins[key]?.[blockId]||false
     setCheckins(prev=>({...prev,[key]:{...(prev[key]||{}),[blockId]:!cur}}))
     await supabase.from('checkins').upsert({date_key:key,block_id:blockId,done:!cur},{onConflict:'date_key,block_id'})
+  }
+
+  // ── Habit check-in ──────────────────────────────────────────────────────────
+  async function setHabitRating(habitId, rating) {
+    const key=dateKey(today)
+    const cur=habits[key]?.[habitId]||0
+    const next=cur===rating?0:rating   // tapping the same value clears it
+    setHabits(prev=>({...prev,[key]:{...(prev[key]||{}),[habitId]:next}}))
+    await supabase.from('habit_checkins').upsert({date_key:key,habit_id:habitId,rating:next},{onConflict:'date_key,habit_id'})
   }
 
   // ── Notes ─────────────────────────────────────────────────────────────────
@@ -358,6 +388,25 @@ export default function Home() {
   const streak        = loading ? '—' : calcStreak()
   const totalSessions = Object.values(checkins).reduce((a,dc)=>a+Object.values(dc).filter(Boolean).length,0)
 
+  // ── Habit derived values ────────────────────────────────────────────────────
+  const todayHabits = habits[todayKey] || {}
+  const DONE_THRESHOLD = 3   // a habit counts as "done" for the day if rated 3+
+
+  function habitStreak(habitId) {
+    let s=0; const d=new Date(today)
+    for(let i=0;i<90;i++){
+      const r=(habits[dateKey(d)]||{})[habitId]||0
+      if(r>=DONE_THRESHOLD){s++; d.setDate(d.getDate()-1)} else break
+    }
+    return s
+  }
+  function habitWeekPct(habitId) {
+    const keys=getLast7Keys()
+    const done=keys.filter(k=>((habits[k]||{})[habitId]||0)>=DONE_THRESHOLD).length
+    return Math.round((done/7)*100)
+  }
+  const todayHabitsDone = HABITS.filter(h=>(todayHabits[h.id]||0)>=DONE_THRESHOLD).length
+
   const TABS = [
     {id:'today',   label:'TODAY'},
     {id:'calendar',label:'CALENDAR'},
@@ -426,6 +475,63 @@ export default function Home() {
         <div style={{padding:'32px 48px',maxWidth:900,margin:'0 auto'}}>
 
           <AICard text={dailyBrief} loading={briefLoading} onGenerate={generateDailyBrief} label="Daily Brief" icon="✦" />
+
+          {/* Daily habit check-in */}
+          <div style={{marginBottom:32}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:14}}>
+              <SectionLabel>Daily Check-in</SectionLabel>
+              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'0.68rem',color:todayHabitsDone===HABITS.length?'#2d5a28':C.muted}}>
+                {todayHabitsDone}/{HABITS.length} habits{todayHabitsDone===HABITS.length?' · ✓':''}
+              </div>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:8}}>
+              {HABITS.map(h=>{
+                const rating=todayHabits[h.id]||0
+                const hit=rating>=DONE_THRESHOLD
+                return(
+                  <div key={h.id} style={{display:'flex',alignItems:'center',gap:12,background:hit?h.color.bg:C.surface,border:`1px solid ${hit?h.color.border:C.border}`,borderRadius:8,padding:'11px 16px',transition:'all 0.15s'}}>
+                    <div style={{flex:1,fontWeight:600,fontSize:'0.85rem',color:hit?h.color.text:C.text}}>{h.label}</div>
+                    <div style={{display:'flex',gap:5}}>
+                      {[1,2,3,4,5].map(n=>{
+                        const on=rating>=n
+                        return(
+                          <button key={n} onClick={()=>setHabitRating(h.id,n)} aria-label={`Rate ${h.label} ${n} of 5`} style={{width:24,height:24,borderRadius:'50%',cursor:'pointer',border:`1.5px solid ${on?h.color.text:C.border}`,background:on?h.color.text:'transparent',color:on?h.color.bg:C.muted,fontFamily:"'DM Mono',monospace",fontSize:'0.6rem',fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.12s',padding:0}}>{n}</button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'0.55rem',color:C.muted,marginTop:8,letterSpacing:'0.03em'}}>Rate 1–5 each day · counts as done at 3+ · tap the same number to clear</div>
+          </div>
+
+          {/* Habit tracker — streaks + weekly % */}
+          <div style={{marginBottom:36}}>
+            <SectionLabel>Habit Tracker</SectionLabel>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:10}}>
+              {HABITS.map(h=>{
+                const st=habitStreak(h.id); const wp=habitWeekPct(h.id)
+                return(
+                  <div key={h.id} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:'13px 15px'}}>
+                    <div style={{fontWeight:600,fontSize:'0.78rem',color:C.text,marginBottom:10}}>{h.label}</div>
+                    <div style={{display:'flex',alignItems:'baseline',justifyContent:'space-between',marginBottom:8}}>
+                      <div>
+                        <span style={{fontFamily:"'DM Serif Display',serif",fontSize:'1.5rem',color:h.color.text}}>{st}</span>
+                        <span style={{fontFamily:"'DM Mono',monospace",fontSize:'0.55rem',color:C.muted,marginLeft:5,textTransform:'uppercase',letterSpacing:'0.05em'}}>day streak</span>
+                      </div>
+                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'0.7rem',color:wp>=70?'#2d5a28':C.mutedDark}}>{wp}%</div>
+                    </div>
+                    <div style={{height:4,background:C.border,borderRadius:2,overflow:'hidden'}}>
+                      <div style={{height:'100%',width:`${wp}%`,background:h.color.text,borderRadius:2,transition:'width 0.4s ease'}}/>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'0.55rem',color:C.muted,marginTop:8,letterSpacing:'0.03em'}}>Streak = consecutive days hit · % = last 7 days</div>
+          </div>
+
 
           {!todayPlan.isActive?(
             <div style={{textAlign:'center',padding:'60px 0'}}>

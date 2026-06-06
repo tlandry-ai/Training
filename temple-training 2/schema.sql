@@ -54,6 +54,15 @@ create table skills (
   created_at timestamptz default now()
 );
 
+create table habit_checkins (
+  id uuid primary key default gen_random_uuid(),
+  date_key text not null,
+  habit_id text not null,
+  rating int not null default 0,
+  created_at timestamptz default now(),
+  unique(date_key, habit_id)
+);
+
 create table practice_entries (
   id uuid primary key default gen_random_uuid(),
   date_key text not null,
@@ -69,6 +78,7 @@ create table practice_entries (
 
 -- Disable RLS (private app, just you)
 alter table checkins        disable row level security;
+alter table habit_checkins  disable row level security;
 alter table notes           disable row level security;
 alter table goals           disable row level security;
 alter table food_log        disable row level security;
