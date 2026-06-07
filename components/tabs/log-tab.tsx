@@ -1,12 +1,22 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Loader2, Trash2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Loader2, Trash2 } from 'lucide-react'
 import { getSupabase } from '@/lib/supabase'
-import { dateKey } from '@/lib/plan'
+import { dateKey, DAY_NAMES, MONTH_NAMES } from '@/lib/plan'
 import { SectionCard } from '@/components/ui-kit'
 
 const MEAL_TYPES = ['Breakfast', 'Lunch', 'Dinner', 'Snack']
+
+function addDays(d: Date, n: number): Date {
+  const next = new Date(d)
+  next.setDate(next.getDate() + n)
+  return next
+}
+
+function sameDay(a: Date, b: Date): boolean {
+  return dateKey(a) === dateKey(b)
+}
 
 interface Meal {
   id: string
@@ -26,8 +36,11 @@ interface Workout {
 }
 
 export default function LogTab() {
-  const key = dateKey(new Date())
   const supabase = getSupabase()
+  const [date, setDate] = useState(new Date())
+  const key = dateKey(date)
+  const today = new Date()
+  const isToday = sameDay(date, today)
 
   const [meals, setMeals] = useState<Meal[]>([])
   const [workouts, setWorkouts] = useState<Workout[]>([])
@@ -158,6 +171,45 @@ export default function LogTab() {
 
   return (
     <div className="flex flex-col gap-5">
+      {/* Day navigator */}
+      <div className="flex items-center justify-between rounded-2xl border border-border bg-card px-3 py-2">
+        <button
+          onClick={() => setDate((d) => addDays(d, -1))}
+          aria-label="Previous day"
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-border text-muted-foreground transition hover:bg-accent hover:text-foreground"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+        <div className="flex flex-col items-center">
+          <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+            {DAY_NAMES[date.getDay()]}
+          </span>
+          <span className="font-serif text-lg leading-tight text-foreground">
+            {MONTH_NAMES[date.getMonth()]} {date.getDate()}
+          </span>
+          {!isToday && (
+            <button
+              onClick={() => setDate(new Date())}
+              className="mt-0.5 font-mono text-[10px] uppercase tracking-wide text-primary underline-offset-2 hover:underline"
+            >
+              Jump to today
+            </button>
+          )}
+          {isToday && (
+            <span className="mt-0.5 font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
+              Today
+            </span>
+          )}
+        </div>
+        <button
+          onClick={() => setDate((d) => addDays(d, 1))}
+          aria-label="Next day"
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-border text-muted-foreground transition hover:bg-accent hover:text-foreground"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
+
       {/* Food log */}
       <SectionCard title="Food Log">
         <div className="mb-4 flex flex-col gap-2 sm:flex-row">
@@ -189,7 +241,7 @@ export default function LogTab() {
 
         {meals.length > 0 && (
           <div className="mb-3 flex gap-4 rounded-xl bg-accent/50 px-4 py-2 font-mono text-[11px] text-muted-foreground">
-            <span>Today: </span>
+            <span>{isToday ? 'Today: ' : 'Total: '}</span>
             <span className="text-foreground">{totals.protein}g P</span>
             <span className="text-foreground">{totals.carbs}g C</span>
             <span className="text-foreground">{totals.fats}g F</span>
@@ -197,7 +249,9 @@ export default function LogTab() {
         )}
 
         {meals.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No meals logged today.</p>
+          <p className="text-sm text-muted-foreground">
+            No meals logged {isToday ? 'today' : 'this day'}.
+          </p>
         ) : (
           <ul className="flex flex-col gap-2">
             {meals.map((m) => (
@@ -277,7 +331,7 @@ export default function LogTab() {
 
         {workouts.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No extra workouts logged today.
+            No extra workouts logged {isToday ? 'today' : 'this day'}.
           </p>
         ) : (
           <ul className="flex flex-col gap-2">
