@@ -2,7 +2,7 @@ import { generateText } from 'ai'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
-const MODEL = 'anthropic/claude-sonnet-4.6'
+const MODEL = 'openai/gpt-5-mini'
 const SYSTEM_PROMPT =
   'You are a personal training assistant for Temple Landry — a Stanford D1 gymnast. Be concise, warm, direct.'
 
