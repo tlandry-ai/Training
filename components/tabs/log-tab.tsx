@@ -169,6 +169,12 @@ export default function LogTab() {
     { protein: 0, carbs: 0, fats: 0 },
   )
 
+  // Calories derived from macros: 4 cal/g protein & carbs, 9 cal/g fat
+  const mealCalories = (m: Meal) =>
+    (m.ai_protein || 0) * 4 + (m.ai_carbs || 0) * 4 + (m.ai_fats || 0) * 9
+  const totalCalories = totals.protein * 4 + totals.carbs * 4 + totals.fats * 9
+  const analyzed = meals.filter((m) => m.ai_protein != null).length
+
   return (
     <div className="flex flex-col gap-5">
       {/* Day navigator */}
@@ -240,11 +246,32 @@ export default function LogTab() {
         </div>
 
         {meals.length > 0 && (
-          <div className="mb-3 flex gap-4 rounded-xl bg-accent/50 px-4 py-2 font-mono text-[11px] text-muted-foreground">
-            <span>{isToday ? 'Today: ' : 'Total: '}</span>
-            <span className="text-foreground">{totals.protein}g P</span>
-            <span className="text-foreground">{totals.carbs}g C</span>
-            <span className="text-foreground">{totals.fats}g F</span>
+          <div className="mb-3 rounded-xl bg-accent/50 px-4 py-3">
+            <div className="flex items-baseline justify-between">
+              <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                {isToday ? "Today's Total" : 'Day Total'}
+              </span>
+              <div className="flex items-baseline gap-1">
+                <span className="font-serif text-2xl leading-none text-foreground">
+                  {totalCalories.toLocaleString()}
+                </span>
+                <span className="font-mono text-[11px] text-muted-foreground">
+                  cal
+                </span>
+              </div>
+            </div>
+            <div className="mt-2 flex gap-4 font-mono text-[11px]">
+              <span style={{ color: '#2d5a28' }}>{totals.protein}g protein</span>
+              <span style={{ color: '#1a4a7a' }}>{totals.carbs}g carbs</span>
+              <span style={{ color: '#7a3d1a' }}>{totals.fats}g fat</span>
+            </div>
+            {analyzed < meals.length && (
+              <p className="mt-1.5 flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Analyzing {meals.length - analyzed} more meal
+                {meals.length - analyzed > 1 ? 's' : ''}…
+              </p>
+            )}
           </div>
         )}
 
@@ -276,6 +303,9 @@ export default function LogTab() {
                 </div>
                 {m.ai_protein != null ? (
                   <div className="mt-2 flex flex-wrap items-center gap-3 font-mono text-[11px]">
+                    <span className="font-medium text-foreground">
+                      {mealCalories(m)} cal
+                    </span>
                     <span style={{ color: '#2d5a28' }}>{m.ai_protein}g P</span>
                     <span style={{ color: '#1a4a7a' }}>{m.ai_carbs}g C</span>
                     <span style={{ color: '#7a3d1a' }}>{m.ai_fats}g F</span>
