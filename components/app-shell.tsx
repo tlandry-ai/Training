@@ -13,6 +13,7 @@ import LogTab from '@/components/tabs/log-tab'
 import HabitsTab from '@/components/tabs/habits-tab'
 import SkillsTab from '@/components/tabs/skills-tab'
 import GoalsTab from '@/components/tabs/goals-tab'
+import TodoTab from '@/components/tabs/todo-tab'
 import WeeklyTab from '@/components/tabs/weekly-tab'
 import BoardTab from '@/components/tabs/board-tab'
 
@@ -23,6 +24,7 @@ const TABS = [
   'HABITS',
   'SKILLS',
   'GOALS',
+  'TO-DO',
   'WEEKLY',
   'BOARD',
 ] as const
@@ -176,6 +178,7 @@ export default function AppShell() {
         {tab === 'HABITS' && <HabitsTab />}
         {tab === 'SKILLS' && <SkillsTab />}
         {tab === 'GOALS' && <GoalsTab onChange={refreshStats} />}
+        {tab === 'TO-DO' && <TodoTab />}
         {tab === 'WEEKLY' && <WeeklyTab />}
         {tab === 'BOARD' && <BoardTab />}
       </main>
