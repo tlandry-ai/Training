@@ -12,7 +12,9 @@ async function isAuthed() {
   return Boolean(c && c.value && c.value === process.env.APP_PASSWORD)
 }
 
-async function generate(prompt: string, maxTokens = 400) {
+// NOTE: gpt-5-mini is a reasoning model — hidden reasoning tokens count against
+// maxOutputTokens. Budgets must be generous or the visible text comes back empty.
+async function generate(prompt: string, maxTokens = 2000) {
   const { text } = await generateText({
     model: MODEL,
     system: SYSTEM_PROMPT,
@@ -48,14 +50,14 @@ export async function POST(req: Request) {
       case 'daily-brief': {
         const { schedule, completionPct, recentNotes, dayLabel } = payload
         const prompt = `Today is ${dayLabel}. Here is today's schedule:\n${schedule}\n\nOver the last 7 days, Temple's session completion rate is ${completionPct}%.\n\nRecent coach notes:\n${recentNotes || '(none)'}\n\nWrite a 2-3 sentence morning brief to set up her day. Be warm and direct.`
-        const text = await generate(prompt, 250)
+        const text = await generate(prompt, 1500)
         return NextResponse.json({ text })
       }
 
       case 'meal-analysis': {
         const { mealType, description } = payload
         const prompt = `Analyze this ${mealType} for a D1 gymnast and estimate macros. Meal: "${description}".\n\nReturn ONLY valid JSON in this exact shape: {"protein": <grams int>, "carbs": <grams int>, "fats": <grams int>, "note": "<one short sentence of feedback>"}.`
-        const text = await generate(prompt, 250)
+        const text = await generate(prompt, 2000)
         const json = extractJson(text)
         return NextResponse.json({
           protein: Number(json.protein) || 0,
@@ -68,7 +70,7 @@ export async function POST(req: Request) {
       case 'skill-analysis': {
         const { skillName, event, entry } = payload
         const prompt = `Temple practiced the skill "${skillName}" on ${event}. Her free-text practice log: "${entry}".\n\nStructure this into coaching feedback. Return ONLY valid JSON in this exact shape: {"went_well": "<short>", "needs_work": "<short>", "coach_feedback": "<short actionable cue>", "pattern": "<short observed pattern>"}.`
-        const text = await generate(prompt, 400)
+        const text = await generate(prompt, 2000)
         const json = extractJson(text)
         return NextResponse.json({
           went_well: json.went_well || '',
@@ -81,14 +83,14 @@ export async function POST(req: Request) {
       case 'goal-nudge': {
         const { goals } = payload
         const prompt = `Here are Temple's active goals (title | category | deadline):\n${goals}\n\nIdentify the single most at-risk goal and write a 1-2 sentence motivating nudge about it.`
-        const text = await generate(prompt, 200)
+        const text = await generate(prompt, 1500)
         return NextResponse.json({ text })
       }
 
       case 'weekly-review': {
         const { stats, notes } = payload
         const prompt = `Here are Temple's stats for the past week:\n${stats}\n\nRecent notes:\n${notes || '(none)'}\n\nWrite a short paragraph summary of her week, then on a new line give exactly ONE concrete adjustment for next week prefixed with "Next week: ".`
-        const text = await generate(prompt, 400)
+        const text = await generate(prompt, 2000)
         return NextResponse.json({ text })
       }
 
