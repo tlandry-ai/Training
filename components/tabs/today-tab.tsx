@@ -18,6 +18,8 @@ export default function TodayTab({ onChange }: { onChange?: () => void }) {
 
   const [done, setDone] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
+  const [calories, setCalories] = useState(0)
+  const [macros, setMacros] = useState({ protein: 0, carbs: 0, fats: 0 })
   const [notes, setNotes] = useState<{ id: string; text: string }[]>([])
   const [noteInput, setNoteInput] = useState('')
   const [brief, setBrief] = useState('')
@@ -43,6 +45,22 @@ export default function TodayTab({ onChange }: { onChange?: () => void }) {
         .eq('date_key', key)
         .order('created_at', { ascending: false })
       setNotes((noteRows || []) as any)
+
+      const { data: foodRows } = await supabase
+        .from('food_log')
+        .select('ai_protein, ai_carbs, ai_fats')
+        .eq('date_key', key)
+      const t = (foodRows || []).reduce(
+        (acc: any, m: any) => ({
+          protein: acc.protein + (m.ai_protein || 0),
+          carbs: acc.carbs + (m.ai_carbs || 0),
+          fats: acc.fats + (m.ai_fats || 0),
+        }),
+        { protein: 0, carbs: 0, fats: 0 },
+      )
+      setMacros(t)
+      setCalories(t.protein * 4 + t.carbs * 4 + t.fats * 9)
+
       setLoading(false)
     }
     load()
