@@ -14,6 +14,7 @@ const TODAY_HABITS = [
   { key: 'water', label: 'Water', color: 'var(--rose)' },
   { key: 'recovery', label: 'Recovery', color: 'var(--butter)' },
   { key: 'scripture', label: 'Scripture', color: 'var(--green)' },
+  { key: 'steps', label: 'Steps', color: 'var(--ink)' },
 ]
 
 export default function TodayTab() {
