@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import { getSupabase } from '@/lib/supabase'
 import { Panel, Eyebrow } from '@/components/ui-kit'
+import FoodDaySwiper from '@/components/food-day-swiper'
 
 // A unified history entry drawn from practice, food, and workout logs.
 interface Entry {
@@ -139,6 +140,8 @@ export default function LogTab() {
 
   return (
     <div>
+      <FoodDaySwiper />
+
       <Panel>
         <Eyebrow>This week</Eyebrow>
         {thisWeek.length === 0 ? (

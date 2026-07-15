@@ -347,6 +347,26 @@
   font-weight: 600;
 }
 
+/* ---------- food day swiper ---------- */
+.food-slide-left {
+  animation: food-in-left 0.22s ease;
+}
+.food-slide-right {
+  animation: food-in-right 0.22s ease;
+}
+@keyframes food-in-left {
+  from {
+    opacity: 0.35;
+    transform: translateX(16px);
+  }
+}
+@keyframes food-in-right {
+  from {
+    opacity: 0.35;
+    transform: translateX(-16px);
+  }
+}
+
 /* ---------- log history ---------- */
 .log-entry {
   padding: 13px 0;
