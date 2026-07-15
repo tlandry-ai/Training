@@ -66,6 +66,42 @@ export function EyebrowRow({
   )
 }
 
+// Ticket-stripe motif. Pass a silk-* class ("silk-blue", "silk-rose", etc.)
+export function Silk({ variant }: { variant: string }) {
+  return <span className={`silk ${variant}`} aria-hidden="true" />
+}
+
+// Panel with an eyebrow header row and optional right-aligned action.
+export function SectionCard({
+  title,
+  action,
+  children,
+  className = '',
+}: {
+  title?: string
+  action?: React.ReactNode
+  children: React.ReactNode
+  className?: string
+}) {
+  return (
+    <Panel className={className}>
+      {(title || action) && (
+        <div className="mb-3 flex items-center justify-between">
+          {title ? (
+            <span className="font-sans text-[10px] font-bold uppercase tracking-[0.18em] text-ink-soft">
+              {title}
+            </span>
+          ) : (
+            <span />
+          )}
+          {action}
+        </div>
+      )}
+      {children}
+    </Panel>
+  )
+}
+
 export function Track({ pct }: { pct: number }) {
   return (
     <div className="mb-3.5 h-[3px] overflow-hidden rounded-sm bg-oat-deep">

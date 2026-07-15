@@ -347,6 +347,145 @@
   font-weight: 600;
 }
 
+/* ---------- log history ---------- */
+.log-entry {
+  padding: 13px 0;
+  border-bottom: 1px solid var(--rule);
+  display: flex;
+  gap: 12px;
+}
+.log-entry:last-child {
+  border-bottom: none;
+}
+.log-day {
+  font-family: var(--font-serif);
+  font-size: 13px;
+  font-weight: 600;
+  flex: 0 0 44px;
+  color: var(--ink-soft);
+  padding-top: 1px;
+  line-height: 1.25;
+}
+.log-txt {
+  flex: 1;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+.log-kind {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+.log-empty {
+  font-size: 14px;
+  color: var(--ink-soft);
+  padding: 6px 0;
+}
+
+/* ---------- goals ---------- */
+.goal-block {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.goal-block:last-child {
+  border-bottom: none;
+}
+.goal-top-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+.goal-name {
+  font-size: 16px;
+  font-weight: 500;
+  flex: 1;
+  color: var(--ink);
+}
+.goal-name.goal-done {
+  text-decoration: line-through;
+  color: var(--ink-soft);
+}
+.goal-num {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.goal-del {
+  color: var(--ink-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  min-width: 32px;
+}
+.goal-del:active {
+  color: var(--destructive);
+}
+.goal-due {
+  font-size: 11px;
+  color: var(--ink-soft);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: 7px;
+  font-weight: 600;
+}
+.goal-range {
+  width: 100%;
+  margin-top: 4px;
+  accent-color: var(--green);
+}
+
+/* Reusable check box (shared with schedule) */
+.sched-box.is-done {
+  background: var(--green);
+  border-color: var(--green);
+}
+.sched-box.is-done::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 5px;
+  height: 10px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(42deg);
+}
+
+/* ---------- form fields ---------- */
+.field {
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--oat);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  padding: 10px 12px;
+  min-height: 44px;
+}
+.field:focus {
+  outline: 2px solid var(--green);
+  outline-offset: 1px;
+}
+.add-goal-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 16px;
+  border-radius: 9px;
+  background: var(--green);
+  color: var(--paper);
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+}
+
 /* ---------- capture sheets ---------- */
 .cap-sheet-backdrop {
   position: fixed;

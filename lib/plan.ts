@@ -22,13 +22,13 @@ export const BLOCK_COLORS: Record<
   BlockType,
   { bg: string; text: string; name: string }
 > = {
-  SolidCore: { bg: '#D6E8D4', text: '#2d5a28', name: 'Solid Core' },
-  CorePower: { bg: '#D4E4F5', text: '#1a4a7a', name: 'CorePower' },
-  Lift: { bg: '#F5E6D4', text: '#7a3d1a', name: 'Lift' },
-  Practice: { bg: '#EBD4F5', text: '#4a1a7a', name: 'Practice' },
-  Work: { bg: '#F5F0D4', text: '#7a6a1a', name: 'Work' },
-  Run: { bg: '#F5D4D4', text: '#7a1a1a', name: 'Run' },
-  PT: { bg: '#D4F5F0', text: '#1a6a5a', name: 'PT' },
+  SolidCore: { bg: '#cfe0d0', text: '#2e4739', name: 'Solid Core' },
+  CorePower: { bg: '#c6d6e3', text: '#33566f', name: 'CorePower' },
+  Lift: { bg: '#f1e7c3', text: '#7a6a1a', name: 'Lift' },
+  Practice: { bg: '#e0bebf', text: '#9a5658', name: 'Practice' },
+  Work: { bg: '#e2dacb', text: '#5c5340', name: 'Work' },
+  Run: { bg: '#d9c3a8', text: '#7a4a1a', name: 'Run' },
+  PT: { bg: '#cfe0d0', text: '#2e4739', name: 'PT' },
   Rest: { bg: '#e8e3da', text: '#837c6f', name: 'Rest' },
 }
 
