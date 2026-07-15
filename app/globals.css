@@ -5,10 +5,9 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-serif: var(--font-dm-serif), ui-serif, Georgia, serif;
-  --font-mono: var(--font-dm-mono), ui-monospace, monospace;
-  --font-script: var(--font-pacifico), cursive;
+  --font-sans: var(--font-karla), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-bodoni), ui-serif, Georgia, serif;
+  --font-mono: var(--font-karla), ui-monospace, monospace;
 
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -18,11 +17,6 @@
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -41,58 +35,131 @@
   --color-card: var(--card);
   --color-foreground: var(--foreground);
   --color-background: var(--background);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* brand accents */
+  --color-oat: var(--oat);
+  --color-oat-deep: var(--oat-deep);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-paper: var(--paper);
+  --color-green: var(--green);
+  --color-blue: var(--blue);
+  --color-rose: var(--rose);
+  --color-butter: var(--butter);
+
+  --radius-sm: 4px;
+  --radius-md: 7px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+  --radius-2xl: 18px;
 }
 
 :root {
-  --background: #f5f0e8;
-  --foreground: #1a1a1a;
-  --card: #ffffff;
-  --card-foreground: #1a1a1a;
-  --popover: #ffffff;
-  --popover-foreground: #1a1a1a;
-  --primary: #1a1a1a;
-  --primary-foreground: #f5f0e8;
-  --secondary: #efe8db;
-  --secondary-foreground: #1a1a1a;
-  --muted: #efe8db;
-  --muted-foreground: #837c6f;
-  --accent: #e8e3da;
-  --accent-foreground: #1a1a1a;
-  --destructive: #7a1a1a;
-  --border: #e8e3da;
-  --input: #e8e3da;
-  --ring: #1a1a1a;
-  --chart-1: #2d5a28;
-  --chart-2: #1a4a7a;
-  --chart-3: #7a3d1a;
-  --chart-4: #4a1a7a;
-  --chart-5: #1a6a5a;
-  --radius: 0.75rem;
-  --sidebar: #ffffff;
-  --sidebar-foreground: #1a1a1a;
-  --sidebar-primary: #1a1a1a;
-  --sidebar-primary-foreground: #f5f0e8;
-  --sidebar-accent: #efe8db;
-  --sidebar-accent-foreground: #1a1a1a;
-  --sidebar-border: #e8e3da;
-  --sidebar-ring: #1a1a1a;
+  /* brand palette */
+  --oat: #ede7dc;
+  --oat-deep: #e2dacb;
+  --ink: #1e2a3a;
+  --ink-soft: #5c6674;
+  --green: #2e4739;
+  --blue: #c6d6e3;
+  --rose: #e0bebf;
+  --butter: #f1e7c3;
+  --paper: #f7f4ed;
+  --rule: rgba(30, 42, 58, 0.14);
+
+  /* semantic tokens */
+  --background: var(--oat);
+  --foreground: var(--ink);
+  --card: var(--paper);
+  --card-foreground: var(--ink);
+  --popover: var(--paper);
+  --popover-foreground: var(--ink);
+  --primary: var(--green);
+  --primary-foreground: var(--paper);
+  --secondary: var(--oat-deep);
+  --secondary-foreground: var(--ink);
+  --muted: var(--oat-deep);
+  --muted-foreground: var(--ink-soft);
+  --accent: var(--oat-deep);
+  --accent-foreground: var(--ink);
+  --destructive: #a23b3b;
+  --destructive-foreground: var(--paper);
+  --border: var(--rule);
+  --input: var(--rule);
+  --ring: var(--green);
+  --radius: 0.625rem;
+  --sidebar: var(--paper);
+  --sidebar-foreground: var(--ink);
+  --sidebar-primary: var(--green);
+  --sidebar-primary-foreground: var(--paper);
+  --sidebar-accent: var(--oat-deep);
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--rule);
+  --sidebar-ring: var(--green);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    -webkit-tap-highlight-color: transparent;
   }
   body {
     @apply bg-background text-foreground;
+    line-height: 1.5;
   }
   html {
     @apply font-sans;
+  }
+}
+
+/* ---------- ticket-stripe motif ---------- */
+.silk {
+  width: 16px;
+  height: 34px;
+  border-radius: 3px;
+  flex: 0 0 16px;
+  border: 1px solid rgba(30, 42, 58, 0.22);
+}
+.silk-blue {
+  background: repeating-linear-gradient(90deg, var(--blue) 0 4px, #fff 4px 7px);
+}
+.silk-butter {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--butter) 0 4px,
+    #fff 4px 7px
+  );
+}
+.silk-rose {
+  background: repeating-linear-gradient(90deg, var(--rose) 0 4px, #fff 4px 7px);
+}
+.silk-green {
+  background: repeating-linear-gradient(90deg, var(--green) 0 4px, #fff 4px 7px);
+}
+.silk-ink {
+  background: repeating-linear-gradient(90deg, var(--ink) 0 4px, #fff 4px 7px);
+}
+
+.rule-stripe {
+  height: 5px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--ink) 0 3px,
+    transparent 3px 9px
+  );
+  opacity: 0.5;
+}
+
+.tab-mark {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--ink) 0 3px,
+    transparent 3px 7px
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
   }
 }

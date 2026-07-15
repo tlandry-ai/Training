@@ -92,6 +92,21 @@ export function getScheduleForDate(d: Date): ScheduleBlock[] {
   return [{ id: 'rest', label: 'Rest Day', time: 'All day', type: 'Rest' }]
 }
 
+// Map a block type to a ticket-stripe ("silk") color class.
+export function silkClass(type: BlockType): string {
+  const map: Record<BlockType, string> = {
+    CorePower: 'silk-blue',
+    SolidCore: 'silk-green',
+    Lift: 'silk-butter',
+    Practice: 'silk-rose',
+    Work: 'silk-ink',
+    Run: 'silk-green',
+    PT: 'silk-blue',
+    Rest: 'silk-ink',
+  }
+  return map[type] || 'silk-ink'
+}
+
 export const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 export const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
