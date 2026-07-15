@@ -111,10 +111,10 @@ export default function LoginPage() {
       {/* Frosted glass login card */}
       <div className="relative z-10 w-full max-w-sm rounded-3xl border border-border/60 bg-card/70 p-8 shadow-2xl backdrop-blur-xl">
         <div className="mb-6 text-center">
-          <h1 className="font-script text-4xl leading-tight text-foreground">
-            {"Temple's Summer Plan"}
+          <h1 className="font-serif text-6xl font-medium italic leading-none tracking-tight text-foreground">
+            Temple
           </h1>
-          <p className="mt-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
+          <p className="mt-3 font-sans text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
             Train · Track · Become
           </p>
         </div>

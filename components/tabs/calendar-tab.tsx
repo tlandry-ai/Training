@@ -12,10 +12,8 @@ import {
   type BlockType,
 } from '@/lib/plan'
 
-const MONTHS = [
-  { year: 2026, month: 5, label: 'June 2026' },
-  { year: 2026, month: 6, label: 'July 2026' },
-]
+// The earliest month a user can page back to (plan start month).
+const MIN_MONTH = { year: 2026, month: 5 } // June 2026
 
 const LEGEND: BlockType[] = [
   'CorePower',
@@ -83,6 +81,29 @@ export default function CalendarTab() {
   const [editingKey, setEditingKey] = useState<string | null>(null)
   const todayKey = dateKey(new Date())
 
+  // Navigable month view — defaults to the current month, but never earlier
+  // than the plan start month.
+  const [view, setView] = useState(() => {
+    const now = new Date()
+    const y = now.getFullYear()
+    const m = now.getMonth()
+    if (y < MIN_MONTH.year || (y === MIN_MONTH.year && m < MIN_MONTH.month)) {
+      return { year: MIN_MONTH.year, month: MIN_MONTH.month }
+    }
+    return { year: y, month: m }
+  })
+
+  const canGoPrev =
+    view.year > MIN_MONTH.year ||
+    (view.year === MIN_MONTH.year && view.month > MIN_MONTH.month)
+
+  function shiftMonth(delta: number) {
+    setView((v) => {
+      const d = new Date(v.year, v.month + delta, 1)
+      return { year: d.getFullYear(), month: d.getMonth() }
+    })
+  }
+
   async function loadEvents() {
     const supabase = getSupabase()
     const { data } = await supabase
@@ -133,16 +154,32 @@ export default function CalendarTab() {
         </span>
       </div>
 
-      {MONTHS.map((m) => {
-        const cells = getMonthGrid(m.year, m.month)
+      {(() => {
+        const cells = getMonthGrid(view.year, view.month)
         return (
-          <div
-            key={m.label}
-            className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5"
-          >
-            <h2 className="mb-4 font-serif text-2xl text-foreground">
-              {m.label}
-            </h2>
+          <div className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => shiftMonth(-1)}
+                disabled={!canGoPrev}
+                aria-label="Previous month"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-lg text-foreground transition hover:bg-accent disabled:opacity-30"
+              >
+                ‹
+              </button>
+              <h2 className="font-serif text-2xl text-foreground">
+                {`${MONTH_NAMES[view.month]} ${view.year}`}
+              </h2>
+              <button
+                type="button"
+                onClick={() => shiftMonth(1)}
+                aria-label="Next month"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-lg text-foreground transition hover:bg-accent"
+              >
+                ›
+              </button>
+            </div>
             <div className="grid grid-cols-7 gap-1.5">
               {DAY_NAMES.map((d) => (
                 <div
@@ -202,7 +239,7 @@ export default function CalendarTab() {
             </div>
           </div>
         )
-      })}
+      })()}
 
       {editingKey && (
         <DayEditor

@@ -32,9 +32,8 @@ export const BLOCK_COLORS: Record<
   Rest: { bg: '#e8e3da', text: '#837c6f', name: 'Rest' },
 }
 
-// Training period: June 22 - August 1, 2026
+// Training period: begins June 22, 2026 and continues indefinitely.
 export const PLAN_START = new Date(2026, 5, 22) // June 22, 2026
-export const PLAN_END = new Date(2026, 7, 1) // August 1, 2026
 
 export function dateKey(d: Date): string {
   const y = d.getFullYear()
@@ -50,7 +49,7 @@ export function parseDateKey(key: string): Date {
 
 function isInPlan(d: Date): boolean {
   const t = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
-  return t >= PLAN_START.getTime() && t <= PLAN_END.getTime()
+  return t >= PLAN_START.getTime()
 }
 
 // Generate the schedule blocks for a given date based on day of week.
