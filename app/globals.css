@@ -67,6 +67,11 @@
   --paper: #f7f4ed;
   --rule: rgba(30, 42, 58, 0.14);
 
+  /* darker readable accents for macro text */
+  --green-ink: #2e4739;
+  --blue-ink: #33566f;
+  --rose-ink: #9a5658;
+
   /* semantic tokens */
   --background: var(--oat);
   --foreground: var(--ink);
@@ -156,6 +161,408 @@
     var(--ink) 0 3px,
     transparent 3px 7px
   );
+}
+
+/* ---------- verse + gratitude ---------- */
+.verse-text {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  line-height: 1.45;
+  font-style: italic;
+  color: var(--ink);
+}
+.verse-cite {
+  display: block;
+  font-family: var(--font-sans);
+  font-style: normal;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-top: 10px;
+  font-weight: 600;
+}
+.grat-input {
+  width: 100%;
+  margin-top: 14px;
+  padding: 11px 12px;
+  border: 1px solid var(--rule);
+  border-radius: 7px;
+  background: var(--oat);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  color: var(--ink);
+  resize: none;
+}
+.grat-input::placeholder {
+  color: var(--ink-soft);
+}
+.grat-input:focus {
+  outline: 2px solid var(--green);
+  outline-offset: 1px;
+}
+
+/* ---------- schedule ---------- */
+.sched-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--rule);
+  cursor: pointer;
+  min-height: 44px;
+}
+.sched-item:last-child {
+  border-bottom: none;
+}
+.sched-box {
+  width: 21px;
+  height: 21px;
+  flex: 0 0 21px;
+  border: 1.5px solid var(--ink);
+  border-radius: 4px;
+  background: transparent;
+  position: relative;
+}
+.sched-item.done .sched-box {
+  background: var(--green);
+  border-color: var(--green);
+}
+.sched-item.done .sched-box::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 5px;
+  height: 10px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(42deg);
+}
+.sched-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.sched-name {
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.sched-time {
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin-top: 1px;
+}
+.sched-item.done .sched-name {
+  text-decoration: line-through;
+  color: var(--ink-soft);
+}
+
+/* ---------- capture launchers ---------- */
+.capture-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.cap-launch {
+  border: 1px solid var(--rule);
+  border-radius: 9px;
+  background: var(--oat);
+  padding: 16px 12px;
+  text-align: left;
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  min-height: 44px;
+}
+.cap-launch:active {
+  background: var(--oat-deep);
+}
+.cap-launch-lbl {
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 9px;
+}
+.cap-launch-sub {
+  font-size: 11px;
+  color: var(--ink-soft);
+  margin-top: 2px;
+}
+
+/* ---------- habits ---------- */
+.habit-row {
+  display: flex;
+  gap: 8px;
+}
+.habit-cell {
+  flex: 1;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--oat);
+  padding: 10px 6px;
+  text-align: center;
+  color: var(--ink);
+  min-height: 44px;
+}
+.habit-dot {
+  display: block;
+  width: 100%;
+  height: 5px;
+  border-radius: 3px;
+  margin-bottom: 8px;
+}
+.habit-nm {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.habit-cell.on {
+  background: var(--green);
+  border-color: var(--green);
+  color: var(--paper);
+}
+.habit-cell.on .habit-dot {
+  background: var(--paper) !important;
+}
+
+/* ---------- coach ---------- */
+.coach-panel {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--oat);
+}
+.coach-panel .eyebrow {
+  color: rgba(237, 231, 220, 0.62);
+}
+.coach-quiet {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: rgba(237, 231, 220, 0.72);
+  line-height: 1.55;
+}
+.coach-quiet b {
+  color: var(--oat);
+  font-weight: 600;
+}
+
+/* ---------- capture sheets ---------- */
+.cap-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(30, 42, 58, 0.42);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: cap-fade 0.18s ease;
+}
+.cap-sheet {
+  width: 100%;
+  max-width: 560px;
+  background: var(--paper);
+  border-top-left-radius: 18px;
+  border-top-right-radius: 18px;
+  border: 1px solid var(--rule);
+  padding: 18px 16px calc(20px + env(safe-area-inset-bottom));
+  animation: cap-rise 0.22s ease;
+}
+@keyframes cap-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes cap-rise {
+  from {
+    transform: translateY(14px);
+  }
+}
+.cap-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.cap-x {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--rule);
+  background: var(--oat);
+  color: var(--ink-soft);
+}
+.cap-chiprow {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.cap-chip {
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--oat);
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 13px;
+  min-height: 36px;
+}
+.cap-chip.on {
+  background: var(--green);
+  border-color: var(--green);
+  color: var(--paper);
+}
+.cap-drop {
+  width: 100%;
+  border: 1.5px dashed var(--rule);
+  border-radius: 12px;
+  background: var(--oat);
+  color: var(--ink);
+  padding: 30px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.cap-drop-lbl {
+  font-size: 15px;
+  font-weight: 600;
+  margin-top: 6px;
+}
+.cap-drop-sub {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+.cap-photo-wrap {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+}
+.cap-photo {
+  width: 100%;
+  max-height: 300px;
+  object-fit: cover;
+  display: block;
+}
+.cap-photo-veil {
+  position: absolute;
+  inset: 0;
+  background: rgba(30, 42, 58, 0.5);
+  color: var(--paper);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}
+.cap-err {
+  color: var(--destructive);
+  font-size: 13px;
+  margin-top: 10px;
+}
+.cap-result {
+  margin-top: 14px;
+}
+.cap-fuel {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+.cap-macros {
+  display: flex;
+  gap: 14px;
+  align-items: baseline;
+  margin-top: 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.cap-cal {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  color: var(--ink);
+}
+.cap-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+.cap-retake,
+.cap-save {
+  flex: 1;
+  min-height: 46px;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid var(--rule);
+}
+.cap-retake {
+  background: var(--oat);
+  color: var(--ink);
+}
+.cap-save {
+  background: var(--green);
+  border-color: var(--green);
+  color: var(--paper);
+}
+.cap-mic-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 0 8px;
+}
+.cap-mic {
+  width: 78px;
+  height: 78px;
+  border-radius: 999px;
+  background: var(--green);
+  color: var(--paper);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cap-mic.rec {
+  background: var(--destructive);
+  animation: cap-pulse 1.3s ease-in-out infinite;
+}
+.cap-mic.working {
+  background: var(--oat-deep);
+  color: var(--ink-soft);
+}
+@keyframes cap-pulse {
+  50% {
+    box-shadow: 0 0 0 10px rgba(162, 59, 59, 0.16);
+  }
+}
+.cap-timer {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  color: var(--ink-soft);
+  letter-spacing: 0.04em;
+}
+.cap-transcript {
+  width: 100%;
+  border: 1px solid var(--rule);
+  border-radius: 9px;
+  background: var(--oat);
+  padding: 11px 12px;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  color: var(--ink);
+  resize: none;
+}
+.cap-transcript:focus {
+  outline: 2px solid var(--green);
+  outline-offset: 1px;
 }
 
 @media (prefers-reduced-motion: reduce) {
