@@ -1,36 +1,37 @@
 import { Analytics } from '@vercel/analytics/next'
-import type { Metadata } from 'next'
-import { DM_Serif_Display, DM_Mono, DM_Sans, Pacifico } from 'next/font/google'
+import type { Metadata, Viewport } from 'next'
+import { Bodoni_Moda, Karla } from 'next/font/google'
 import './globals.css'
 
-const dmSans = DM_Sans({
-  variable: '--font-dm-sans',
+const bodoni = Bodoni_Moda({
+  variable: '--font-bodoni',
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
+  weight: ['400', '500', '600', '700', '800'],
+  style: ['normal', 'italic'],
+  display: 'swap',
 })
 
-const dmSerif = DM_Serif_Display({
-  variable: '--font-dm-serif',
+const karla = Karla({
+  variable: '--font-karla',
   subsets: ['latin'],
-  weight: ['400'],
-})
-
-const dmMono = DM_Mono({
-  variable: '--font-dm-mono',
-  subsets: ['latin'],
-  weight: ['400', '500'],
-})
-
-const pacifico = Pacifico({
-  variable: '--font-pacifico',
-  subsets: ['latin'],
-  weight: ['400'],
+  weight: ['300', '400', '500', '600', '700'],
+  style: ['normal', 'italic'],
+  display: 'swap',
 })
 
 export const metadata: Metadata = {
-  title: "Temple's Summer Plan",
-  description: 'Personal training and lifestyle tracker',
+  title: 'Summer Training',
+  description:
+    'A quiet training journal — schedule, fuel, and goals for the summer.',
   generator: 'v0.app',
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: '#EDE7DC',
 }
 
 export default function RootLayout({
@@ -41,7 +42,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${dmSans.variable} ${dmSerif.variable} ${dmMono.variable} ${pacifico.variable} bg-background`}
+      className={`${bodoni.variable} ${karla.variable} bg-background`}
     >
       <body className="font-sans antialiased">
         {children}

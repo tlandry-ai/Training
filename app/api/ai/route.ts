@@ -79,6 +79,47 @@ export async function POST(req: Request) {
         })
       }
 
+      case 'meal-photo': {
+        const { imageUrl, mealType } = payload
+        const schema = z.object({
+          fuel_read: z
+            .string()
+            .describe(
+              'a warm, qualitative 1-2 sentence read on how this meal fuels a hard training day — not a lecture',
+            ),
+          items: z.string().describe('short comma-separated list of foods seen'),
+          protein: z.number().describe('estimated grams of protein'),
+          carbs: z.number().describe('estimated grams of carbohydrates'),
+          fats: z.number().describe('estimated grams of fat'),
+        })
+        const { experimental_output } = await generateText({
+          model: 'openai/gpt-4o-mini',
+          system: SYSTEM_PROMPT,
+          maxOutputTokens: 1200,
+          messages: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'text',
+                  text: `This is a photo of Temple's ${mealType || 'meal'}. Identify the foods, give a qualitative fuel read for a D1 gymnast's training day, and estimate macros in grams.`,
+                },
+                { type: 'image', image: new URL(imageUrl) },
+              ],
+            },
+          ],
+          experimental_output: Output.object({ schema }),
+        })
+        const o = experimental_output as z.infer<typeof schema>
+        return NextResponse.json({
+          fuel_read: o.fuel_read || '',
+          items: o.items || '',
+          protein: Math.round(Number(o.protein) || 0),
+          carbs: Math.round(Number(o.carbs) || 0),
+          fats: Math.round(Number(o.fats) || 0),
+        })
+      }
+
       case 'skill-analysis': {
         const { skillName, event, entry } = payload
         const prompt = `Temple practiced the skill "${skillName}" on ${event}. Her free-text practice log: "${entry}". Structure this into coaching feedback.`

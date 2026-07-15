@@ -1,203 +1,91 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
-import { getSupabase } from '@/lib/supabase'
-import {
-  dateKey,
-  getScheduleForDate,
-  parseDateKey,
-} from '@/lib/plan'
+import { useState } from 'react'
+import { MONTH_NAMES } from '@/lib/plan'
 import TodayTab from '@/components/tabs/today-tab'
-import CalendarTab from '@/components/tabs/calendar-tab'
 import LogTab from '@/components/tabs/log-tab'
-import HabitsTab from '@/components/tabs/habits-tab'
-import SkillsTab from '@/components/tabs/skills-tab'
 import GoalsTab from '@/components/tabs/goals-tab'
-import OkrTab from '@/components/tabs/okr-tab'
-import TodoTab from '@/components/tabs/todo-tab'
-import WeeklyTab from '@/components/tabs/weekly-tab'
+import CalendarTab from '@/components/tabs/calendar-tab'
 import BoardTab from '@/components/tabs/board-tab'
 
 const TABS = [
-  'TODAY',
-  'CALENDAR',
-  'LOG',
-  'HABITS',
-  'SKILLS',
-  'GOALS',
-  'OKRS',
-  'TO-DO',
-  'WEEKLY',
-  'BOARD',
+  { key: 'today', label: 'Today' },
+  { key: 'log', label: 'Log' },
+  { key: 'goals', label: 'Goals' },
+  { key: 'calendar', label: 'Calendar' },
+  { key: 'board', label: 'Board' },
 ] as const
-type Tab = (typeof TABS)[number]
+type Tab = (typeof TABS)[number]['key']
 
 export default function AppShell() {
-  const [tab, setTab] = useState<Tab>('TODAY')
-  const [streak, setStreak] = useState(0)
-  const [sessionCount, setSessionCount] = useState(0)
-  const [goalCount, setGoalCount] = useState(0)
-  const [statsVersion, setStatsVersion] = useState(0)
+  const [tab, setTab] = useState<Tab>('today')
 
-  const refreshStats = () => setStatsVersion((v) => v + 1)
-
-  useEffect(() => {
-    const supabase = getSupabase()
-    let active = true
-
-    async function load() {
-      const { data: checkins } = await supabase
-        .from('checkins')
-        .select('date_key, block_id, done')
-      const { data: goals } = await supabase
-        .from('goals')
-        .select('id, done')
-
-      if (!active) return
-
-      const rows = (checkins || []) as {
-        date_key: string
-        block_id: string
-        done: boolean
-      }[]
-
-      // Total non-rest sessions completed
-      const sessions = rows.filter(
-        (r) => r.done && r.block_id !== 'rest',
-      ).length
-      setSessionCount(sessions)
-
-      // Goals open count
-      const g = (goals || []) as { id: string; done: boolean }[]
-      setGoalCount(g.filter((x) => !x.done).length)
-
-      // Day streak: consecutive days (ending today) where all scheduled
-      // non-rest blocks are checked off. Rest days count as kept.
-      const doneByDate = new Map<string, Set<string>>()
-      for (const r of rows) {
-        if (!r.done) continue
-        if (!doneByDate.has(r.date_key)) doneByDate.set(r.date_key, new Set())
-        doneByDate.get(r.date_key)!.add(r.block_id)
-      }
-
-      let s = 0
-      const cursor = new Date()
-      for (let i = 0; i < 120; i++) {
-        const d = new Date(cursor)
-        d.setDate(cursor.getDate() - i)
-        const key = dateKey(d)
-        const schedule = getScheduleForDate(d)
-        const isRest = schedule.length === 1 && schedule[0].type === 'Rest'
-        if (isRest) {
-          // Rest days don't break the streak but also don't add to it on
-          // the first iteration unless something is logged. Skip counting,
-          // continue the chain.
-          if (i === 0) continue
-          continue
-        }
-        const done = doneByDate.get(key)
-        const allDone =
-          done && schedule.every((b) => done.has(b.id))
-        if (allDone) {
-          s++
-        } else {
-          if (i === 0) {
-            // today not complete yet — don't break, just don't count today
-            continue
-          }
-          break
-        }
-      }
-      setStreak(s)
-    }
-
-    load()
-    return () => {
-      active = false
-    }
-  }, [statsVersion])
-
-  const today = useMemo(() => new Date(), [])
+  const now = new Date()
+  const dateLine = `${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][now.getDay()]}, ${MONTH_NAMES[now.getMonth()]} ${now.getDate()}`
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-20 border-b border-border bg-background/85 backdrop-blur-md">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
+    <div className="min-h-screen bg-oat pb-24">
+      {/* Masthead */}
+      <header className="border-b border-border bg-oat px-5 pb-3.5 pt-6">
+        <div className="mx-auto flex max-w-[560px] items-start justify-between">
           <div>
-            <h1 className="font-serif text-2xl leading-none text-foreground sm:text-3xl">
+            <h1 className="font-serif text-[34px] font-semibold leading-none tracking-tight text-ink">
               Summer Training
             </h1>
-            <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-              {today.toLocaleDateString('en-US', {
-                weekday: 'long',
-                month: 'long',
-                day: 'numeric',
-              })}
+            <p className="mt-2 font-sans text-[11px] font-medium uppercase tracking-[0.16em] text-ink-soft">
+              {dateLine}
             </p>
           </div>
-
-          <div className="flex items-center gap-5">
-            <Stat label="Day Streak" value={streak} />
-            <Stat label="Sessions" value={sessionCount} />
-            <Stat label="Goals" value={goalCount} />
-            <button
-              onClick={async () => {
-                await fetch('/api/login', { method: 'DELETE' })
-                window.location.reload()
-              }}
-              className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground transition hover:text-foreground"
-            >
-              Exit
-            </button>
-          </div>
+          <button
+            onClick={async () => {
+              await fetch('/api/login', { method: 'DELETE' })
+              window.location.reload()
+            }}
+            className="mt-1 font-sans text-[10px] font-bold uppercase tracking-[0.14em] text-ink-soft transition hover:text-ink"
+          >
+            Exit
+          </button>
         </div>
-
-        {/* Tabs */}
-        <nav className="mx-auto max-w-5xl overflow-x-auto px-4 sm:px-6">
-          <div className="flex min-w-max gap-1 pb-2">
-            {TABS.map((t) => (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                className={`rounded-full px-4 py-1.5 font-mono text-xs uppercase tracking-wide transition ${
-                  tab === t
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-accent hover:text-foreground'
-                }`}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-        </nav>
       </header>
+      <div className="rule-stripe" />
 
-      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
-        {tab === 'TODAY' && <TodayTab onChange={refreshStats} />}
-        {tab === 'CALENDAR' && <CalendarTab />}
-        {tab === 'LOG' && <LogTab />}
-        {tab === 'HABITS' && <HabitsTab />}
-        {tab === 'SKILLS' && <SkillsTab />}
-        {tab === 'GOALS' && <GoalsTab onChange={refreshStats} />}
-        {tab === 'OKRS' && <OkrTab />}
-        {tab === 'TO-DO' && <TodoTab />}
-        {tab === 'WEEKLY' && <WeeklyTab />}
-        {tab === 'BOARD' && <BoardTab />}
+      {/* Views */}
+      <main className="mx-auto max-w-[560px] px-4 pb-2 pt-[18px]">
+        {tab === 'today' && <TodayTab />}
+        {tab === 'log' && <LogTab />}
+        {tab === 'goals' && <GoalsTab />}
+        {tab === 'calendar' && <CalendarTab />}
+        {tab === 'board' && <BoardTab />}
       </main>
-    </div>
-  )
-}
 
-function Stat({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="text-right">
-      <div className="font-serif text-xl leading-none text-foreground">
-        {value}
-      </div>
-      <div className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
-        {label}
-      </div>
+      {/* Bottom tab bar */}
+      <nav
+        role="tablist"
+        className="fixed inset-x-0 bottom-0 z-20 mx-auto flex max-w-[560px] border-t border-border bg-paper px-3 pb-[calc(8px+env(safe-area-inset-bottom))] pt-2"
+      >
+        {TABS.map((t) => {
+          const selected = tab === t.key
+          return (
+            <button
+              key={t.key}
+              role="tab"
+              aria-selected={selected}
+              onClick={() => {
+                setTab(t.key)
+                window.scrollTo(0, 0)
+              }}
+              className={`flex flex-1 flex-col items-center px-1 py-[9px] font-sans text-[11px] font-bold uppercase tracking-[0.14em] transition ${
+                selected ? 'text-ink' : 'text-ink-soft'
+              }`}
+            >
+              <span
+                className={`mb-[7px] h-1 w-full rounded-sm ${selected ? 'tab-mark' : 'bg-transparent'}`}
+              />
+              {t.label}
+            </button>
+          )
+        })}
+      </nav>
     </div>
   )
 }
