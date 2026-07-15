@@ -123,7 +123,7 @@ export default function MealCapture({
           <button className="cap-drop" onClick={() => fileRef.current?.click()}>
             <Camera className="h-6 w-6" />
             <span className="cap-drop-lbl">Take or choose a photo</span>
-            <span className="cap-drop-sub">Fuel read, not a calorie count</span>
+            <span className="cap-drop-sub">Fuel read plus a calorie estimate</span>
           </button>
         )}
 
