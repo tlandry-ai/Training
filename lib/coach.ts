@@ -238,3 +238,53 @@ Use enough weight that you can't do more than the reps listed. If something says
 Please, please prioritize your sleep and hydration!! Your body needs that recovery time to adapt and get stronger, especially with your shoulder history. And remember, the scale doesn't tell the full story — progress photos and how your clothes fit show you the real change.
 
 Can't wait to see you ascend. Reach out with any questions! — Josie`
+
+// ---------- Plan context for the AI coach ----------
+// Compact, model-friendly summary of the whole plan.
+export function buildPlanContext(): string {
+  const food = FOOD_GUIDE.map(
+    (g) =>
+      `${g.label}: ${g.items
+        .map((i) => (i.note ? `${i.name} (${i.note})` : i.name))
+        .join(', ')}`,
+  ).join('\n')
+
+  const sample = SAMPLE_DAY.map((m) => `- ${m.meal}: ${m.text}`).join('\n')
+
+  const schedule = TRAINING_SCHEDULE.map(
+    (d) => `- ${d.day}: ${d.focus}`,
+  ).join('\n')
+
+  const workouts = WORKOUTS.map(
+    (w) =>
+      `${w.label}:\n${w.exercises
+        .map((e) => `  · ${e.name} — ${e.sets} sets x ${e.reps} reps`)
+        .join('\n')}`,
+  ).join('\n')
+
+  return `PLAN: "${COACH.title}" written by coach ${COACH.name} (${COACH.date}).
+
+DAILY MACRO TARGETS:
+- Calories: ${MACRO_TARGETS.caloriesLow}–${MACRO_TARGETS.caloriesHigh}
+- Protein: ${MACRO_TARGETS.protein}g
+- Carbs: ${MACRO_TARGETS.carbs}g
+- Fat: ${MACRO_TARGETS.fat}g
+Daily priorities: ${DAILY_PRIORITIES.join(', ')}.
+
+FOOD GUIDE (approved foods):
+${food}
+
+SAMPLE DAY OF EATING:
+${sample}
+
+TRAINING SCHEDULE:
+${schedule}
+
+WORKOUT LIBRARY:
+${workouts}
+
+WEEKLY CHECKLIST: ${WEEKLY_CHECKLIST.join(', ')}.
+
+JOSIE'S PHILOSOPHY (in her own words):
+${COACH_NOTE}`
+}

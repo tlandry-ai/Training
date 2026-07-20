@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@ai-sdk/gateway": "^4.0.20",
+    "@ai-sdk/react": "4.0.34",
     "@base-ui/react": "^1.5.0",
     "@supabase/supabase-js": "^2.107.0",
     "@vercel/analytics": "1.6.1",
