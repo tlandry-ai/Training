@@ -4,7 +4,43 @@ import { useEffect, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import { getSupabase } from '@/lib/supabase'
 import { dateKey } from '@/lib/plan'
+import { MACRO_TARGETS } from '@/lib/coach'
 import { Panel } from '@/components/ui-kit'
+
+function MacroBar({
+  label,
+  value,
+  target,
+  accent,
+}: {
+  label: string
+  value: number
+  target: number
+  accent: string
+}) {
+  const pct = target > 0 ? Math.min(100, (value / target) * 100) : 0
+  return (
+    <div>
+      <div className="mb-1 flex items-baseline justify-between">
+        <span
+          className="font-sans text-[10px] font-bold uppercase tracking-[0.12em]"
+          style={{ color: accent }}
+        >
+          {label}
+        </span>
+        <span className="font-sans text-[11px] text-ink-soft">
+          <span className="font-semibold text-ink">{value}</span> / {target}g
+        </span>
+      </div>
+      <div className="h-1.5 overflow-hidden rounded-full bg-oat-deep">
+        <i
+          className="block h-full rounded-full transition-[width] duration-300"
+          style={{ width: `${pct}%`, backgroundColor: accent }}
+        />
+      </div>
+    </div>
+  )
+}
 
 interface Meal {
   id: string
@@ -167,26 +203,50 @@ export default function FoodDaySwiper() {
           </p>
         ) : (
           <>
-            {/* Daily total */}
-            <div className="mb-3 flex items-baseline justify-between rounded-xl bg-secondary px-4 py-3">
-              <span className="font-sans text-[10px] font-bold uppercase tracking-[0.16em] text-ink-soft">
-                Day total
-              </span>
-              <div className="flex items-baseline gap-1">
-                <span className="font-serif text-2xl leading-none text-ink">
-                  {cals.toLocaleString()}
+            {/* Daily total vs. Josie's targets */}
+            <div className="mb-3 rounded-xl bg-secondary px-4 py-3">
+              <div className="flex items-baseline justify-between">
+                <span className="font-sans text-[10px] font-bold uppercase tracking-[0.16em] text-ink-soft">
+                  Day total
                 </span>
-                <span className="font-sans text-[11px] text-ink-soft">cal</span>
+                <div className="flex items-baseline gap-1">
+                  <span className="font-serif text-2xl leading-none text-ink">
+                    {cals.toLocaleString()}
+                  </span>
+                  <span className="font-sans text-[11px] text-ink-soft">
+                    / {MACRO_TARGETS.caloriesLow.toLocaleString()}–
+                    {MACRO_TARGETS.caloriesHigh.toLocaleString()} cal
+                  </span>
+                </div>
+              </div>
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-oat-deep">
+                <i
+                  className="block h-full rounded-full bg-ink transition-[width] duration-300"
+                  style={{
+                    width: `${Math.min(100, (cals / MACRO_TARGETS.caloriesHigh) * 100)}%`,
+                  }}
+                />
               </div>
             </div>
-            <div className="mb-3 flex gap-4 px-1 font-sans text-[11px] font-semibold">
-              <span style={{ color: 'var(--green-ink)' }}>
-                {totals.protein}g protein
-              </span>
-              <span style={{ color: 'var(--blue-ink)' }}>
-                {totals.carbs}g carbs
-              </span>
-              <span style={{ color: 'var(--rose-ink)' }}>{totals.fats}g fat</span>
+            <div className="mb-3 space-y-2.5 px-1">
+              <MacroBar
+                label="Protein"
+                value={totals.protein}
+                target={MACRO_TARGETS.protein}
+                accent="var(--green-ink)"
+              />
+              <MacroBar
+                label="Carbs"
+                value={totals.carbs}
+                target={MACRO_TARGETS.carbs}
+                accent="var(--blue-ink)"
+              />
+              <MacroBar
+                label="Fat"
+                value={totals.fats}
+                target={MACRO_TARGETS.fat}
+                accent="var(--rose-ink)"
+              />
             </div>
 
             {/* Meals */}

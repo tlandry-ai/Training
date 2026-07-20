@@ -7,10 +7,12 @@ import LogTab from '@/components/tabs/log-tab'
 import GoalsTab from '@/components/tabs/goals-tab'
 import CalendarTab from '@/components/tabs/calendar-tab'
 import BoardTab from '@/components/tabs/board-tab'
+import CoachTab from '@/components/tabs/coach-tab'
 
 const TABS = [
   { key: 'today', label: 'Today' },
   { key: 'log', label: 'Log' },
+  { key: 'coach', label: 'Coach' },
   { key: 'goals', label: 'Goals' },
   { key: 'calendar', label: 'Calendar' },
   { key: 'board', label: 'Board' },
@@ -53,6 +55,7 @@ export default function AppShell() {
       <main className="mx-auto max-w-[560px] px-4 pb-2 pt-[18px]">
         {tab === 'today' && <TodayTab />}
         {tab === 'log' && <LogTab />}
+        {tab === 'coach' && <CoachTab />}
         {tab === 'goals' && <GoalsTab />}
         {tab === 'calendar' && <CalendarTab />}
         {tab === 'board' && <BoardTab />}
