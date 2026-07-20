@@ -12,11 +12,6 @@ import {
   type BlockType,
 } from '@/lib/plan'
 
-const MONTHS = [
-  { year: 2026, month: 5, label: 'June 2026' },
-  { year: 2026, month: 6, label: 'July 2026' },
-]
-
 const LEGEND: BlockType[] = [
   'CorePower',
   'SolidCore',
@@ -81,7 +76,23 @@ export default function CalendarTab() {
     new Map(),
   )
   const [editingKey, setEditingKey] = useState<string | null>(null)
-  const todayKey = dateKey(new Date())
+  const now = new Date()
+  const todayKey = dateKey(now)
+  // Revolving month view: starts on the current month, pages forward/back.
+  const [view, setView] = useState<{ year: number; month: number }>({
+    year: now.getFullYear(),
+    month: now.getMonth(),
+  })
+
+  function shiftMonth(delta: number) {
+    setView((v) => {
+      const d = new Date(v.year, v.month + delta, 1)
+      return { year: d.getFullYear(), month: d.getMonth() }
+    })
+  }
+
+  const isCurrentMonth =
+    view.year === now.getFullYear() && view.month === now.getMonth()
 
   async function loadEvents() {
     const supabase = getSupabase()
@@ -133,16 +144,48 @@ export default function CalendarTab() {
         </span>
       </div>
 
-      {MONTHS.map((m) => {
-        const cells = getMonthGrid(m.year, m.month)
+      {(() => {
+        const cells = getMonthGrid(view.year, view.month)
+        const label = `${MONTH_NAMES[view.month]} ${view.year}`
         return (
-          <div
-            key={m.label}
-            className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5"
-          >
-            <h2 className="mb-4 font-serif text-2xl text-foreground">
-              {m.label}
-            </h2>
+          <div className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
+            <div className="mb-4 flex items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={() => shiftMonth(-1)}
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-border font-mono text-lg text-ink-soft transition hover:border-foreground/40 hover:text-foreground"
+                aria-label="Previous month"
+              >
+                ‹
+              </button>
+              <div className="flex flex-col items-center">
+                <h2 className="font-serif text-2xl leading-none text-foreground">
+                  {label}
+                </h2>
+                {!isCurrentMonth && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setView({
+                        year: now.getFullYear(),
+                        month: now.getMonth(),
+                      })
+                    }
+                    className="mt-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                  >
+                    Back to today
+                  </button>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => shiftMonth(1)}
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-border font-mono text-lg text-ink-soft transition hover:border-foreground/40 hover:text-foreground"
+                aria-label="Next month"
+              >
+                ›
+              </button>
+            </div>
             <div className="grid grid-cols-7 gap-1.5">
               {DAY_NAMES.map((d) => (
                 <div
@@ -202,7 +245,7 @@ export default function CalendarTab() {
             </div>
           </div>
         )
-      })}
+      })()}
 
       {editingKey && (
         <DayEditor

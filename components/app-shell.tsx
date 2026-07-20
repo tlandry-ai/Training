@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { MONTH_NAMES } from '@/lib/plan'
 import TodayTab from '@/components/tabs/today-tab'
 import LogTab from '@/components/tabs/log-tab'
@@ -22,8 +22,14 @@ type Tab = (typeof TABS)[number]['key']
 export default function AppShell() {
   const [tab, setTab] = useState<Tab>('today')
 
-  const now = new Date()
-  const dateLine = `${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][now.getDay()]}, ${MONTH_NAMES[now.getMonth()]} ${now.getDate()}`
+  // Compute the date on the client only, to avoid SSR/client timezone mismatches.
+  const [dateLine, setDateLine] = useState('')
+  useEffect(() => {
+    const now = new Date()
+    setDateLine(
+      `${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][now.getDay()]}, ${MONTH_NAMES[now.getMonth()]} ${now.getDate()}`,
+    )
+  }, [])
 
   return (
     <div className="min-h-screen bg-oat pb-24">
@@ -32,10 +38,10 @@ export default function AppShell() {
         <div className="mx-auto flex max-w-[560px] items-start justify-between">
           <div>
             <h1 className="font-serif text-[34px] font-semibold leading-none tracking-tight text-ink">
-              Summer Training
+              Temple&apos;s Plan
             </h1>
             <p className="mt-2 font-sans text-[11px] font-medium uppercase tracking-[0.16em] text-ink-soft">
-              {dateLine}
+              {dateLine || '\u00a0'}
             </p>
           </div>
           <button
