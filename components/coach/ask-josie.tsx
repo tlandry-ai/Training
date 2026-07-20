@@ -3,7 +3,49 @@
 import { useEffect, useRef, useState } from 'react'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport, type UIMessage } from 'ai'
-import { Loader2, Send, Link2, Search } from 'lucide-react'
+import { Loader2, Send, Link2, Search, Paperclip, X } from 'lucide-react'
+
+type Attachment = { id: string; name: string; mediaType: string; url: string }
+
+function readAsDataUrl(file: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = () => reject(new Error('Could not read file'))
+    reader.readAsDataURL(file)
+  })
+}
+
+// Downscale large photos to a sane size before sending. Keeps payloads small
+// (phone photos can be many MB) and gives the model a clean, readable image.
+async function prepareImage(
+  file: File,
+): Promise<{ url: string; mediaType: string }> {
+  const dataUrl = await readAsDataUrl(file)
+  try {
+    const img = document.createElement('img')
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve()
+      img.onerror = () => reject(new Error('Could not load image'))
+      img.src = dataUrl
+    })
+    const MAX = 1280
+    const scale = Math.min(1, MAX / Math.max(img.width, img.height))
+    if (scale === 1 && dataUrl.length < 700_000) {
+      return { url: dataUrl, mediaType: file.type }
+    }
+    const canvas = document.createElement('canvas')
+    canvas.width = Math.round(img.width * scale)
+    canvas.height = Math.round(img.height * scale)
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return { url: dataUrl, mediaType: file.type }
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+    return { url: canvas.toDataURL('image/jpeg', 0.82), mediaType: 'image/jpeg' }
+  } catch {
+    // Fall back to the raw data URL if canvas processing fails.
+    return { url: dataUrl, mediaType: file.type }
+  }
+}
 
 const SUGGESTIONS = [
   'What should I eat post-workout today?',
@@ -17,6 +59,17 @@ function messageText(m: UIMessage): string {
     .filter((p: any) => p.type === 'text')
     .map((p: any) => p.text)
     .join('')
+}
+
+function messageImages(m: UIMessage): { url: string; name?: string }[] {
+  return (m.parts || [])
+    .filter(
+      (p: any) =>
+        p.type === 'file' &&
+        typeof p.mediaType === 'string' &&
+        p.mediaType.startsWith('image/'),
+    )
+    .map((p: any) => ({ url: p.url as string, name: p.filename as string }))
 }
 
 // Lightweight formatter: **bold**, [text](url) links, and paragraph/line breaks.
@@ -103,7 +156,9 @@ function ToolChips({ message }: { message: UIMessage }) {
 
 export default function AskJosie() {
   const [input, setInput] = useState('')
+  const [attachments, setAttachments] = useState<Attachment[]>([])
   const scrollRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({ api: '/api/coach-chat' }),
   })
@@ -117,11 +172,47 @@ export default function AskJosie() {
     })
   }, [messages, status])
 
+  async function handleFiles(list: FileList | null) {
+    if (!list) return
+    const images = Array.from(list).filter((f) => f.type.startsWith('image/'))
+    const results = await Promise.allSettled(
+      images.map(async (f) => {
+        const { url, mediaType } = await prepareImage(f)
+        return {
+          id: `${f.name}-${f.size}-${Math.random().toString(36).slice(2)}`,
+          name: f.name,
+          mediaType,
+          url,
+        }
+      }),
+    )
+    const next = results
+      .filter(
+        (r): r is PromiseFulfilledResult<Attachment> => r.status === 'fulfilled',
+      )
+      .map((r) => r.value)
+    if (next.length > 0) setAttachments((prev) => [...prev, ...next])
+  }
+
+  function removeAttachment(id: string) {
+    setAttachments((prev) => prev.filter((a) => a.id !== id))
+  }
+
   function submit(text: string) {
     const trimmed = text.trim()
-    if (!trimmed || busy) return
-    sendMessage({ text: trimmed })
+    if ((!trimmed && attachments.length === 0) || busy) return
+    sendMessage({
+      text: trimmed || 'Take a look at this and tell me how it fits my plan.',
+      files: attachments.map((a) => ({
+        type: 'file' as const,
+        mediaType: a.mediaType,
+        url: a.url,
+        filename: a.name,
+      })),
+    })
     setInput('')
+    setAttachments([])
+    if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
   return (
@@ -147,8 +238,9 @@ export default function AskJosie() {
           <div className="pt-2">
             <p className="font-serif text-[15px] italic leading-relaxed text-ink-soft">
               Hey Temple! Ask me anything about your plan — swaps, recipes,
-              macros, or a lift. Paste a TikTok or Instagram recipe link and
-              I&apos;ll make it fit your goals.
+              macros, or a lift. Paste a TikTok or Instagram recipe link, or
+              snap a photo of your meal, a menu, or a recipe and I&apos;ll break
+              it down to fit your goals.
             </p>
             <div className="mt-4 flex flex-col gap-2">
               {SUGGESTIONS.map((s) => (
@@ -167,6 +259,7 @@ export default function AskJosie() {
         {messages.map((m) => {
           const isUser = m.role === 'user'
           const text = messageText(m)
+          const images = messageImages(m)
           return (
             <div
               key={m.id}
@@ -174,6 +267,22 @@ export default function AskJosie() {
             >
               <div className={isUser ? 'max-w-[85%]' : 'max-w-[92%]'}>
                 {!isUser && <ToolChips message={m} />}
+                {images.length > 0 && (
+                  <div
+                    className={`mb-1.5 flex flex-wrap gap-1.5 ${isUser ? 'justify-end' : ''}`}
+                  >
+                    {images.map((img, i) => (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        key={i}
+                        src={img.url || '/placeholder.svg'}
+                        alt={img.name || 'Attached image'}
+                        className="h-28 w-28 rounded-xl border border-border object-cover"
+                      />
+                    ))}
+                  </div>
+                )}
+                {(text || !isUser) && (
                 <div
                   className={
                     isUser
@@ -194,6 +303,7 @@ export default function AskJosie() {
                     )
                   )}
                 </div>
+                )}
               </div>
             </div>
           )
@@ -202,7 +312,46 @@ export default function AskJosie() {
 
       {/* Composer */}
       <div className="border-t border-border px-3 py-3">
+        {attachments.length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-2">
+            {attachments.map((a) => (
+              <div key={a.id} className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={a.url || '/placeholder.svg'}
+                  alt={a.name}
+                  className="h-16 w-16 rounded-lg border border-border object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeAttachment(a.id)}
+                  aria-label={`Remove ${a.name}`}
+                  className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-ink text-oat"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
         <div className="flex items-end gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={(e) => handleFiles(e.target.files)}
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={busy}
+            aria-label="Attach photo"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border text-ink-soft transition hover:border-ink hover:text-ink disabled:opacity-30"
+          >
+            <Paperclip className="h-4 w-4" />
+          </button>
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -218,12 +367,12 @@ export default function AskJosie() {
               }
             }}
             rows={1}
-            placeholder="Ask Josie, or paste a recipe link…"
+            placeholder="Ask Josie, paste a link, or attach a photo…"
             className="max-h-28 flex-1 resize-none rounded-xl border border-border bg-secondary px-3.5 py-2.5 font-sans text-[14px] text-ink outline-none placeholder:text-ink-soft/70 focus:border-ink"
           />
           <button
             onClick={() => submit(input)}
-            disabled={busy || !input.trim()}
+            disabled={busy || (!input.trim() && attachments.length === 0)}
             aria-label="Send"
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ink text-oat disabled:opacity-30"
           >
